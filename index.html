@@ -1374,6 +1374,7 @@ async function renderParent(){
   <label class="f" for="sModel">Model Claude</label><input type="text" id="sModel" value="${esc(S.settings.apiModel||"claude-sonnet-5-5")}">
   <label class="f" for="sHook">Địa chỉ Web App email (Google Apps Script, kết thúc bằng /exec)</label><input type="text" id="sHook" value="${esc(S.settings.webhookUrl||"")}" placeholder="https://script.google.com/macros/s/.../exec">
   <label class="f" for="sTok">Mã bí mật (giống TOKEN trong file email-tu-dong.gs)</label><input type="text" id="sTok" value="${esc(S.settings.webhookToken||"")}">
+  <label class="opt" style="margin-top:8px"><input type="checkbox" id="sOpenMail" ${S.settings.openEmail!==false?"checked":""}><span>Gửi email cho bố mẹ mỗi khi con mở app trên máy này (tắt trên máy của bố mẹ)</span></label>
   <div class="row" style="margin-top:8px"><button class="btn small ghost" id="hookTest">Gửi email thử</button><button class="btn small ghost" id="backup">Sao lưu dữ liệu</button><label class="btn small ghost" for="restoreF">Khôi phục</label><input type="file" id="restoreF" accept="application/json" hidden></div>
   <label class="f" for="sPin">PIN mới (để trống nếu giữ nguyên)</label><input type="password" inputmode="numeric" id="sPin">
   <div class="row" style="margin-top:12px"><button class="btn teal" id="saveSet">Lưu cài đặt</button></div></div>
@@ -1394,7 +1395,7 @@ async function renderParent(){
   $("#saveSet").onclick=()=>{
     const st=S.settings;st.email=$("#sEmail").value.trim();st.childName=$("#sName").value.trim()||"Ngân Hà";
     st.dailyMin=Math.max(10,parseInt($("#sMin").value)||30);st.stickerValue=Math.max(0,parseInt($("#sVal").value)||0);st.dayOffCost=Math.max(1,parseInt($("#sOff").value)||5);
-    st.centerScore=roundBand(parseFloat($("#sCenter").value)||4.5);st.targetDate=$("#sTarget").value||st.targetDate;st.grade=$("#sGrade").value.trim()||st.grade;st.apiKey=$("#sKey").value.trim();st.apiModel=$("#sModel").value.trim()||"claude-sonnet-5-5";st.webhookUrl=$("#sHook").value.trim();st.webhookToken=$("#sTok").value.trim();setTimeout(flushOutbox,500);
+    st.centerScore=roundBand(parseFloat($("#sCenter").value)||4.5);st.targetDate=$("#sTarget").value||st.targetDate;st.grade=$("#sGrade").value.trim()||st.grade;st.apiKey=$("#sKey").value.trim();st.apiModel=$("#sModel").value.trim()||"claude-sonnet-5-5";st.webhookUrl=$("#sHook").value.trim();st.webhookToken=$("#sTok").value.trim();st.openEmail=$("#sOpenMail").checked;setTimeout(flushOutbox,500);
     const np=$("#sPin").value.trim();if(np){if(np.length<4){toast("PIN cần ít nhất 4 số.");return}st.pin=np;st.pinChanged=true}
     save();toast("Đã lưu cài đặt.");renderParent();
   };
@@ -1470,7 +1471,21 @@ let flushing=false;
 async function flushOutbox(){const u=S.settings.webhookUrl;if(flushing||!u||!(S.outbox||[]).length||navigator.onLine===false)return;flushing=true;const items=S.outbox.slice(0,50);
   try{await fetch(u,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({token:S.settings.webhookToken||"",items})});const sent=new Set(items.map(x=>x.id+"|"+JSON.stringify(x.survey||null)));S.outbox=S.outbox.filter(x=>!sent.has(x.id+"|"+JSON.stringify(x.survey||null)));save()}catch(e){}
   flushing=false;if((S.outbox||[]).length&&items.length===50)setTimeout(flushOutbox,1000)}
-addEventListener("online",flushOutbox);setTimeout(flushOutbox,2000);
+function deviceName(){const u=navigator.userAgent||"";if(/iPad/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1))return "iPad";if(/iPhone/.test(u))return "iPhone";if(/Android/.test(u))return /Mobile/.test(u)?"điện thoại Android":"máy tính bảng Android";if(/Windows/.test(u))return "máy tính Windows";if(/Macintosh|Mac OS X/.test(u))return "máy Mac";return "thiết bị khác"}
+let lastOpenSent=0;
+async function sendOpen(){
+  const u=S.settings.webhookUrl;if(!u||S.settings.openEmail===false)return;
+  if(Date.now()-lastOpenSent<30*60000)return;lastOpenSent=Date.now();
+  const P=planInfo(),now=new Date(),pend=pendingSurveyRec();
+  const body={token:S.settings.webhookToken||"",event:"open",child:S.settings.childName,device:deviceName(),date:dayKey(),time:now.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit",hour12:false}),minutesToday:Math.floor(dayMinutes(dayKey())),dailyMin:S.settings.dailyMin,week:P.week,focus:P.focus.focus,topic:P.focus.topic,missedYesterday:missedYesterday(),pendingSurvey:pend?SKILL_NAME[pend.type]:"",stickers:stickerBalance()};
+  if(navigator.onLine===false){S.pendingOpen=body;persistLocal();return}
+  try{await fetch(u,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)});if(S.pendingOpen){delete S.pendingOpen;persistLocal()}}catch(e){S.pendingOpen=body;persistLocal()}
+}
+async function sendPendingOpen(){const u=S.settings.webhookUrl;if(!u||!S.pendingOpen)return;const b=Object.assign({},S.pendingOpen,{late:true,token:S.settings.webhookToken||""});try{await fetch(u,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(b)});delete S.pendingOpen;persistLocal()}catch(e){}}
+let hiddenAt=0;
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){hiddenAt=Date.now();return}
+  if(hiddenAt&&Date.now()-hiddenAt>=30*60000){hiddenAt=0;sendOpen();if(!session)showWelcome(true)}});
+addEventListener("online",()=>{flushOutbox();sendPendingOpen()});setTimeout(()=>{flushOutbox();sendPendingOpen();sendOpen()},2000);
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
