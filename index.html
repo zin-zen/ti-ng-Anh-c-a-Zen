@@ -230,7 +230,7 @@ summary{cursor:pointer;font-weight:600}
 </div>
 
 <main id="main"></main>
-<footer class="credit">design by Papa-Phí Mạnh Trường</footer>
+<footer class="credit">Designed by Papa-Phí Mạnh Trường</footer>
 
 <nav class="tabs" id="tabs">
   <button data-tab="home" aria-current="page"><span class="ti" data-icon="home"></span>Học</button>
@@ -1345,7 +1345,7 @@ async function renderParent(){
   ${!S.settings.pinChanged?`<div class="banner">Hãy đổi PIN mặc định ở phần Cài đặt bên dưới.</div>`:""}
   ${!S.settings.email?`<div class="banner">Chưa có email phụ huynh. Nhập ở Cài đặt để gửi báo cáo.</div>`:""}
   <div class="panel"><h3>Hôm nay</h3><p><b>${Math.floor(dayMinutes(k))}/${S.settings.dailyMin} phút</b> · ${today.length} buổi · ${dayMinutes(k)>=S.settings.dailyMin?"✅ Đã hoàn thành":S.dayOffs.includes(k)?"🌴 Ngày nghỉ đã đổi":"⏳ Chưa đủ"}</p>
-  ${today.length?`<div class="scroll"><table class="t"><tr><th>Bắt đầu</th><th>Bài</th><th>Thời gian</th><th>Điểm</th><th>Vội</th></tr>${today.map(s=>`<tr><td>${new Date(s.start).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"})}</td><td>${SKILL_NAME[s.type]}${s.status==="bỏ dở"?" (bỏ dở)":""}</td><td>${fmtTime(s.secs)}</td><td>${s.score??"–"}${s.band?` (band ${s.band})`:""}</td><td>${s.rushed||0}</td></tr>`).join("")}</table></div>`:""}
+  ${today.length?`<div class="scroll"><table class="t"><tr><th>Bắt đầu</th><th>Bài</th><th>Thời gian</th><th>Kết quả</th><th>Vội</th></tr>${today.map(s=>`<tr><td>${new Date(s.start).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"})}</td><td>${SKILL_NAME[s.type]}${s.status==="bỏ dở"?" (bỏ dở)":""}</td><td>${fmtTime(s.secs)}</td><td>${scoreText(s)}</td><td>${s.rushed||0}</td></tr>`).join("")}</table></div>`:""}
   <div class="row" style="margin-top:10px">${S.settings.email?`<a class="btn small teal" href="${mailtoDaily()}" target="_blank" rel="noopener">Gửi email hôm nay</a>`:""}<button class="btn small ghost" id="copyDay">Sao chép báo cáo</button></div></div>
   <div class="panel"><h3>Trình độ & mục tiêu</h3><p>Trung tâm: <b>${S.settings.centerScore}</b>${lv?` · Test trong app (${fmtDate(lv.date)}): <b>${lv.overall}</b> (${lv.cefr}) – Nghe ${lv.bands.listening}, Đọc ${lv.bands.reading}, Viết ${lv.bands.writing}, Nói ${lv.bands.speaking}`:" · Con chưa làm test trong app"}</p>
   <p class="small">Mục tiêu 6.5 trước ${fmtDate(P.end)}. Tuần ${P.week}/${P.totalW}, giai đoạn “${esc(P.phase.name)}” (mục tiêu ${P.phase.target}). Sách đã làm: ${Object.values(S.bookDone).filter(Boolean).length}/${P.week} tuần.</p>
@@ -1359,7 +1359,7 @@ async function renderParent(){
   <div id="repOut" class="report">${lastRep?esc(lastRep.text):""}</div>
   <div class="row" style="margin-top:10px"><button class="btn teal small" id="analyze">${lastRep?"Phân tích lại tuần này":"Phân tích tuần này"}</button>${lastRep&&S.settings.email?`<a class="btn small" id="mailRep" href="${mailtoWeekly(lastRep.text)}" target="_blank" rel="noopener">Gửi email báo cáo tuần</a>`:""}${lastRep?`<button class="btn ghost small" id="copyRep">Sao chép</button>`:""}</div>${lastRep?`<p class="muted small">Lập ngày ${lastRep.date}</p>`:""}</div>
   ${pend.length?`<div class="panel"><h3>Yêu cầu đổi thưởng</h3>${pend.map(r=>`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0"><span>${esc(r.label)} · ${r.cost} sticker</span><span class="row"><button class="btn small teal" data-ap="${r.id}">Duyệt</button><button class="btn small ghost" data-rj="${r.id}">Từ chối</button></span></div>`).join("")}</div>`:""}
-  <div class="panel"><h3>Nhật ký bài làm</h3>${S.sessions.slice().reverse().slice(0,25).map(s=>`<details><summary>${s.date} · ${SKILL_NAME[s.type]} · ${s.score??"–"}/10${s.band?` · band ${s.band}`:""} · ${fmtTime(s.secs)}${s.status==="bỏ dở"?" · bỏ dở":""}</summary>${detailHTML(s)}</details>`).join("")||`<p class="muted">Chưa có buổi học nào.</p>`}</div>
+  <div class="panel"><h3>Nhật ký bài làm</h3>${S.sessions.slice().reverse().slice(0,25).map(s=>`<details><summary>${s.date} · ${SKILL_NAME[s.type]} · ${scoreText(s)} · ${fmtTime(s.secs)}${s.status==="bỏ dở"?" · bỏ dở":""}</summary>${detailHTML(s)}</details>`).join("")||`<p class="muted">Chưa có buổi học nào.</p>`}</div>
   <div class="panel"><h3>Email tự động</h3><p class="small">${S.settings.webhookUrl?`Đã nối với Google Apps Script. ${(S.outbox||[]).length?`${S.outbox.length} mục đang chờ gửi (sẽ gửi khi có mạng).`:"Mọi buổi học đã được gửi."}`:"Chưa nối. Làm theo mục D trong HUONG-DAN-CAI-DAT, rồi dán địa chỉ Web App vào Cài đặt bên dưới."}</p><p class="small muted">Email “đã học / chưa học” mỗi ngày và báo cáo tuần 18h00 Chủ nhật (kèm kết quả khảo sát) gửi từ Gmail của bố mẹ.</p></div>
   <div class="panel"><h3>Cài đặt</h3>
   <label class="f" for="sEmail">Email phụ huynh</label><input type="email" id="sEmail" value="${esc(S.settings.email)}" placeholder="bo.me@gmail.com">
@@ -1450,9 +1450,15 @@ Viết bằng tiếng Việt, văn bản thuần (không markdown, không dấu 
     S.reports.push({date:dayKey(),text:r.text});if(S.reports.length>12)S.reports=S.reports.slice(-12);save();renderParent();
   }catch(e){out.textContent="";aiFail(e)}
 }
+function scoreText(s){
+  const d=s.details||{};
+  if(d.overall!=null||d.bands){const b=d.bands||{};const parts=["listening","reading","writing","speaking"].filter(k=>b[k]!=null).map(k=>`${SKILL_NAME[k]} ${b[k]}`);return `band ${d.overall!=null?d.overall+"/9":"–"}${parts.length?` (${parts.join(", ")})`:""}`}
+  if(s.score==null)return s.band!=null?`band ${s.band}/9`:"chưa có điểm";
+  return `${s.score}/10${s.band!=null?` · band ${s.band}/9`:""}`;
+}
 function dailyReport(k=dayKey()){
   const ss=S.sessions.filter(s=>s.date===k),m=Math.floor(dayMinutes(k)),goal=S.settings.dailyMin;
-  return `Báo cáo học IELTS ngày ${k}\nHọc sinh: ${S.settings.childName}\nThời gian: ${m}/${goal} phút — ${m>=goal?"ĐÃ HOÀN THÀNH":"CHƯA ĐỦ"}\n\n`+(ss.map(s=>`• ${new Date(s.start).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"})} ${SKILL_NAME[s.type]}: ${fmtTime(s.secs)}, điểm ${s.score??"–"}/10${s.band?`, band ${s.band}`:""}${s.rushed?`, làm vội ${s.rushed} lần`:""}${s.status==="bỏ dở"?" (bỏ dở)":""}${s.survey?` [khảo sát: ${s.survey.diff}, ${s.survey.mood}${(s.survey.why||[]).length?", sai do "+s.survey.why.join("/"):""}]`:""}`).join("\n")||"Chưa có buổi học nào.")+`\n\nSticker hiện có: ${stickerBalance()} (${vnd(stickerBalance()*S.settings.stickerValue)})\n— Gửi từ ứng dụng IELTS cho Zen`;
+  return `Báo cáo học IELTS ngày ${k}\nHọc sinh: ${S.settings.childName}\nThời gian: ${m}/${goal} phút — ${m>=goal?"ĐÃ HOÀN THÀNH":"CHƯA ĐỦ"}\n\n`+(ss.map(s=>`• ${new Date(s.start).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"})} ${SKILL_NAME[s.type]}: ${fmtTime(s.secs)}, ${scoreText(s)}${s.rushed?`, làm vội ${s.rushed} lần`:""}${s.status==="bỏ dở"?" (bỏ dở)":""}${s.survey?` [khảo sát: ${s.survey.diff}, ${s.survey.mood}${(s.survey.why||[]).length?", sai do "+s.survey.why.join("/"):""}]`:""}`).join("\n")||"Chưa có buổi học nào.")+`\n\nSticker hiện có: ${stickerBalance()} (${vnd(stickerBalance()*S.settings.stickerValue)})\n— Gửi từ ứng dụng IELTS cho Zen`;
 }
 function mailtoDaily(){return `mailto:${encodeURIComponent(S.settings.email)}?subject=${encodeURIComponent(`[IELTS] Báo cáo ngày ${dayKey()} – ${S.settings.childName}`)}&body=${encodeURIComponent(dailyReport())}`}
 function mailtoWeekly(text){return `mailto:${encodeURIComponent(S.settings.email)}?subject=${encodeURIComponent(`[IELTS] Báo cáo tuần – ${S.settings.childName}`)}&body=${encodeURIComponent(text.slice(0,1800))}`}
