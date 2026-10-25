@@ -1137,15 +1137,18 @@ function startSpeaking(opts={}){
     const it=items[i];
     main.innerHTML=`${sessionHead("Speaking")}<div class="progress"><i style="width:${i/items.length*100}%"></i></div><p class="muted small">${esc(it.part)} · Câu ${i+1}/${items.length}</p>
     <div class="panel"><p style="font-size:1.1rem;font-weight:600">${esc(it.q)}</p>${it.cue?`<p class="muted small">Part 2: chuẩn bị 1 phút, sau đó nói 1–2 phút. <span class="pill" id="p2t">Chuẩn bị 01:00</span></p>`:`<p class="muted small">Trả lời 2–4 câu, có lý do và ví dụ.</p>`}
-    <div class="row"><button class="btn ghost small" id="rep">🔊 Nghe lại câu hỏi</button>${SR?`<button class="btn small mic" id="mic">🎙️ Bắt đầu nói</button>`:""}</div></div>
+    <div class="row"><button class="btn ghost small" id="rep">🔊 Nghe lại câu hỏi</button>${(SR||/iP(hone|ad|od)/.test(navigator.userAgent))?`<button class="btn small mic" id="mic">🎙️ Bắt đầu nói</button>`:""}</div></div>
     <label class="f" for="sa">${SR?"Lời con nói sẽ hiện ở đây (có thể sửa hoặc gõ thêm)":"Gõ câu trả lời của con (thiết bị không hỗ trợ ghi âm)"}</label><textarea id="sa" style="min-height:150px"></textarea><p class="small muted" id="micHint" hidden style="margin-top:6px">Nếu chữ không hiện: chạm vào ô trên, rồi bấm biểu tượng 🎙 trên <b>bàn phím iPhone</b> (bàn phím tiếng Anh) để đọc chính tả. Cách này luôn dùng được.</p>
     <div class="row" style="margin-top:10px"><button class="btn teal" id="nx">${i===items.length-1?"Nộp cho cô chấm":"Câu tiếp"}</button></div>`;
     bindQuit();
     speak(it.q);$("#rep").onclick=()=>speak(it.q);
     const ta=$("#sa");
     if(it.cue){let p=60;const el=$("#p2t");const iv=setInterval(()=>{if(!document.body.contains(el)){clearInterval(iv);return}p--;if(p>0)el.textContent="Chuẩn bị "+fmtTime(p);else if(p===0){el.textContent="Bắt đầu nói!";say("Okay, please start speaking now.")}else{el.textContent="Đang nói "+fmtTime(-p);if(p===-120){el.textContent="Hết 2 phút";clearInterval(iv)}}},1000)}
-    if(SR){const mb=$("#mic");let want=false,got=false,finals="",base="";
-      const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+    const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+    const kbOnly=isIOS&&(navigator.standalone===true||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches));
+    if(kbOnly){const mb=$("#mic");if(mb){mb.textContent="🎙️ Nói (micro bàn phím)";const h0=$("#micHint");if(h0){h0.hidden=false;h0.innerHTML="Trên iPhone: bấm nút <b>🎙️ Nói</b>, bàn phím hiện ra → bấm biểu tượng <b>🎙</b> ở góc dưới bàn phím (bàn phím <b>tiếng Anh</b>) → nói → bấm vào chữ để dừng. Lời con nói sẽ hiện vào ô."}
+      mb.onclick=()=>{try{speechSynthesis.cancel()}catch(e){}ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);toast("Bấm 🎙 ở góc dưới bàn phím rồi nói nhé.");lastAct=Date.now()}}}
+    else if(SR){const mb=$("#mic");let want=false,got=false,finals="",base="",wd=null;
       const stopUI=()=>{mb.classList.remove("on");mb.textContent="🎙️ Nói tiếp";if(session)session.listening=false;ta.placeholder=""};
       const hint=()=>{const h=$("#micHint");if(h)h.hidden=false};
       const startRec=()=>{
@@ -1163,6 +1166,7 @@ function startSpeaking(opts={}){
         want=true;got=false;finals="";base=ta.value?ta.value.trim()+" ":"";
         mb.classList.add("on");mb.textContent="⏹ Dừng";ta.placeholder="Cô đang nghe… con nói to, rõ bằng tiếng Anh nhé.";if(session)session.listening=true;
         setTimeout(()=>{try{startRec()}catch(e){want=false;stopUI();toast("Không bật được micro.");hint()}},350);
+        clearTimeout(wd);wd=setTimeout(()=>{if(want&&!got){want=false;try{rec&&rec.stop()}catch(e){}stopUI();hint();toast("Cô chưa nhận được lời con nói. Dùng micro trên bàn phím nhé.")}},9000);
       }}
     $("#nx").onclick=async()=>{const a=ta.value.trim();if(a.split(/\s+/).length<8){const r=await modal(`<h3>Câu trả lời hơi ngắn</h3><p>Giám khảo cần nghe con nói đủ ý: trả lời, lý do, ví dụ. Nói thêm nhé?</p>`,[{label:"Nói thêm",cls:"teal"},{label:"Tiếp",cls:"ghost"}]);if(r.i===0)return}it.a=a;step(i+1)};
   };
