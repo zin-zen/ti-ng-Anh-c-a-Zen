@@ -1046,7 +1046,7 @@ function stickerTarget(){return planInfo().phase.target}
 function stickerRules(type,rec,details){
   const why=[];let n=0;const target=stickerTarget();
   if(type==="placement")return {n:0,why};
-  if(details&&details.kind==="cam")return {n:0,why:["Điểm đề sách Cambridge / đề online do con tự chấm nên được ghi lại để theo dõi, không tính sticker."]};
+  if(details&&details.kind==="cam"&&!details.fallback)return {n:0,why:["Điểm đề sách Cambridge / đề online do con tự chấm nên được ghi lại để theo dõi, không tính sticker."]};
   if((rec.rushed||0)>=3)return {n:0,why:["Bài này làm vội từ 3 lần trở lên nên chưa tính sticker. Lần sau đọc chậm lại nhé!"]};
   if(type==="vocab"){if(rec.score!=null&&rec.score>=8){n++;why.push("Từ vựng đạt từ 8/10")}}
   else if(type==="mock"){if(details&&details.bands){const k=Object.values(details.bands).filter(b=>b>=target).length;if(k){n+=k;why.push(`${k} kỹ năng thi thử đạt từ band ${target}`)}}}
@@ -1359,9 +1359,10 @@ const ERR_TYPES=["Sai chính tả","Số / ngày / giờ","Bị bẫy (người 
 function answerSheet(c){
   const first=c.short?1:(c.part-1)*10+1,on=!!c.online,src=on?"trang đề":"sách",title=on?(c.label||`Đề online · Part ${c.part}`):`Cambridge ${c.book} Test ${c.test} Part ${c.part}`;const ttl=c.label?c.label+(c.redo?" (làm lại)":""):title;beginSession("listening");
   main.innerHTML=`${sessionHead(on?(c.short?"Đề online · bài mẫu":`Đề online · Part ${c.part}`):`Cambridge ${c.book} · Test ${c.test} · Part ${c.part}`)}<div class="panel"><ol class="small" style="margin:0 0 8px;padding-left:18px">${c.auto?`<li>Gõ đáp án ${c.short?"bài mẫu (đánh số câu từ 1, câu nào không có thì để trống)":`Part ${c.part} (câu ${first}–${first+9})`} vào các ô dưới. Có thể gõ trong lúc nghe hoặc ngay sau khi nghe.</li>${`<li>Cần mở lại đề? <a href="${esc(c.url||"")}" target="_blank" rel="noopener">Bấm đây</a>.</li>`}`:`<li>Đọc trước câu ${first}–${first+9} trên ${src} (30 giây).</li><li>Phát audio Part ${c.part} trên ${src}, nghe <b>1 lần</b>, gõ đáp án vào các ô dưới.</li>`}<li>Xong bấm <b>Chấm bài</b>.</li></ol>
+  ${on&&!c.redo?`<button class="btn ghost small" id="asLost" style="width:100%;justify-content:center;margin:0 0 10px">😕 Con không tìm thấy đề / không nghe được → làm bài trong app</button>`:""}
   ${Array.from({length:10},(_,k)=>`<div class="q" style="display:flex;gap:8px;align-items:center"><span class="qn">${first+k}</span><input type="text" id="as${k}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`).join("")}
   <div class="row" style="margin-top:10px"><button class="btn teal" id="asDone">Chấm bài</button></div></div>`;
-  bindQuit();say("Play the recording and type your answers. Listen only once.",`Con phát audio trên ${src}, nghe một lần và gõ đáp án vào phiếu nhé.`);
+  bindQuit();if($("#asLost"))$("#asLost").onclick=()=>camFallback({id:c.webId,label:c.label});say("Play the recording and type your answers. Listen only once.",`Con phát audio trên ${src}, nghe một lần và gõ đáp án vào phiếu nhé.`);
   $("#asDone").onclick=()=>{const ans=Array.from({length:10},(_,k)=>$("#as"+k).value.trim());if(ans.filter(Boolean).length<(c.short?1:5)){toast("Con mới điền "+ans.filter(Boolean).length+" câu – điền thêm rồi chấm nhé.");return}
     const mark=Array(10).fill(null),why=Array(10).fill(null),fix=Array(10).fill(""),rs=Array(10).fill("");
     const draw=()=>{main.innerHTML=`${sessionHead("Chấm theo đáp án cuối sách")}<div class="panel"><p class="small">${on?"Nộp bài trên trang đề để xem đáp án":`Mở <b>Answer Key</b> cuối sách Cambridge ${c.book}, Test ${c.test}`}. Bấm <b>✓</b> nếu đúng, <b>✗</b> nếu sai. Câu sai: ghi <b>đáp án đúng</b>, chọn <b>loại lỗi</b> và viết <b>vì sao lúc đó con chọn đáp án ấy</b> (con nghe thấy gì, nghĩ gì) – để bố mẹ và cô biết con yếu ở đâu.</p>
@@ -1404,19 +1405,27 @@ async function loadRemoteTests(){if(!/^https?:/.test(location.protocol))return;t
 function webDone(){return (S.webDone||[])}
 function webNext(){const W=webItems(),d=webDone();const it=W.find(x=>!d.includes(x.id));return it?Object.assign({},it):Object.assign({},W.find(x=>x.id===d[0])||W[0],{again:true})}
 function webAdvance(id){S.webDone=webDone();if(!S.webDone.includes(id))S.webDone.push(id);else{S.webDone=S.webDone.filter(x=>x!==id);S.webDone.push(id)}save()}
+function camFallback(w){
+  const label=(w&&w.label)||"đề online";S.notFound=(S.notFound||[]).concat([{date:dayKey(),label}]).slice(-30);if(w&&w.id)webAdvance(w.id);save();
+  const set=pickFresh(LISTENING_BANK,"L");if(!session)beginSession("listening");
+  say("No problem. Let's do a test inside the app instead.","Không sao con nhé. Mình làm bài nghe ngay trong app thay cho đề đó. Bố mẹ sẽ giúp con tìm đề sau.");
+  runQuizSet(clone(set),"listening",{onDone:res=>{const rec=endSession(res.correct/res.total*10,{kind:"cam",fallback:true,correct:res.correct,total:res.total,band:rawToBand(res.correct/res.total*40),title:"Bài trong app (con không tìm thấy đề: "+label+")",notFound:label});showResult(rec,`${res.correct}/${res.total} câu đúng`,`<p class="small muted">Con đã báo không tìm thấy <b>${esc(label)}</b>. Bố mẹ sẽ thấy trong báo cáo và giúp con. Lần sau app chuyển sang đề khác.</p>`)}});
+}
 function startCambridge(src){
   const c=camNext();
   if(!src&&!S.camBook){
     const W=webItems(),w=webNext(),first=w.short?1:(w.part-1)*10+1,left=W.filter(x=>!webDone().includes(x.id)).length,doneList=S.sessions.filter(s=>s.details&&s.details.kind==="cam"&&s.details.webId).slice(-6).reverse();
     main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">Đề thật hôm nay</h2><button class="btn ghost small" id="bk">← Trang học</button></div>
     <div class="panel" style="border:2px solid var(--teal)"><p class="small muted" style="margin:0">Cô đã chọn sẵn cho con</p><h3 style="margin:4px 0">${esc(w.label)}</h3><p class="small muted" style="margin:0 0 10px">${left>0?`Bài mới – còn ${left}/${W.length} bài chính thức con chưa làm (British Council, IDP)`:`Con đã làm hết ${W.length} bài chính thức miễn phí – đây là lượt làm lại để kiểm tra tiến bộ`}</p>
-    <ol class="small" style="margin:0 0 12px;padding-left:20px"><li>Bấm nút dưới: trang đề mở ra. Tìm <b>${esc(w.find)}</b>, bấm phát, nghe <b>1 lần</b>.</li><li>Nghe xong, bấm <b>Xong</b> (góc trên bên trái) để quay về app – phiếu trả lời đã chờ sẵn.</li></ol>
-    <a class="btn teal" id="goWeb" href="${w.url}" target="_blank" rel="noopener" style="width:100%;justify-content:center">▶ Mở đề hôm nay</a></div>
+    <ol class="small" style="margin:0 0 12px;padding-left:20px"><li>Bấm nút dưới: trang đề mở ra. Tìm <b>${esc(w.find)}</b>, bấm phát, nghe <b>1 lần</b>.</li><li>Nghe xong, bấm <b>Xong</b> (góc trên bên trái) để quay về app – phiếu trả lời đã chờ sẵn.</li><li>Tìm quá <b>5 phút</b> chưa thấy đề? Quay về app, bấm nút <b>“Con không tìm thấy đề”</b>.</li></ol>
+    <a class="btn teal" id="goWeb" href="${w.url}" target="_blank" rel="noopener" style="width:100%;justify-content:center">▶ Mở đề hôm nay</a>
+    <button class="btn ghost small" id="camLost" style="width:100%;justify-content:center;margin-top:10px">😕 Con không tìm thấy đề → làm bài trong app</button></div>
     ${doneList.length?`<div class="panel"><h3 style="margin-top:0">↺ Làm lại bài đã làm</h3><p class="small muted">Làm lại sau vài ngày để xem con đã sửa được lỗi chưa. Lượt làm lại không làm đổi bài hôm nay.</p>${doneList.map((s,i)=>`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span class="small">${esc(s.details.title)}<br><span class="muted">${fmtDate(s.date)} · ${s.details.correct}/${s.details.total} câu đúng</span></span><button class="btn ghost small" data-redo="${esc(s.details.webId)}">Làm lại</button></div>`).join("")}</div>`:""}
     <p class="small muted">Nhà có sách Cambridge? <button class="btn ghost small" id="useBook">Làm đề trong sách</button></p>`;
     say("Your test for today is ready. Tap the green button.",`Hôm nay con làm: ${w.label}. Con bấm nút xanh để mở đề nhé.`);
     $("#bk").onclick=()=>{tab="home";render()};
     $("#useBook").onclick=()=>{S.camBook=true;save();startCambridge("book")};
+    $("#camLost").onclick=()=>camFallback(w);
     $("#goWeb").onclick=()=>{setTimeout(()=>answerSheet({online:true,url:w.url,part:w.part,auto:true,webId:w.id,label:w.label,short:w.short}),300)};
     main.querySelectorAll("[data-redo]").forEach(b=>b.onclick=()=>{const it=webItems().find(x=>x.id===b.dataset.redo);if(!it)return;window.open(it.url,"_blank","noopener");setTimeout(()=>answerSheet({online:true,url:it.url,part:it.part,auto:true,webId:it.id,label:it.label,short:it.short,redo:true}),300)});
     return;
