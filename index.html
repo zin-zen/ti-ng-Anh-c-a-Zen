@@ -964,11 +964,16 @@ function pickVoice(lang){
   const g=p.male?MALE_EN:/serena|kate|sonia|libby|martha|samantha|karen|moira|tessa|stephanie|catherine|female/i;
   return gb.find(v=>g.test(v.name))||gb[0];
 }
+function duoVoices(){const L=voicesFor("en");if(!L.length)return [null,null];
+  const q=v=>(/premium|enhanced|siri|natural|neural|online/i.test(v.name)?4:0)+(/en-(gb|au|ie|nz)/i.test((v.lang||"").replace("_","-"))?2:0)+(v.localService===false?1:0);
+  const best=a=>a.slice().sort((x,y)=>q(y)-q(x))[0];
+  const men=L.filter(v=>MALE_EN.test(v.name)),women=L.filter(v=>!MALE_EN.test(v.name)&&!/novelty|whisper|bells|bubbles|organ|zarvox|trinoids|cellos|bad news|good news|jester|superstar|wobble|boing|bahh|albert|fred|junior|ralph/i.test(v.name));
+  const a=best(women)||best(L),b=best(men)||L.find(v=>v!==a)||a;return [a,b]}
 function T(s){if(!persona().male)return s;return s.replace(/(^|[\s,.!?“"])Cô(?=[\s,.!?]|$)/g,"$1Thầy").replace(/(^|[\s,.!?“"])cô(?=[\s,.!?]|$)/g,"$1thầy")}
 function viText(s){s=T(s);if(VS.teacher==="mai-nam")s=s.replace(/ nhé/g," nha").replace(/ đấy/g," đó");return s}
 function speak(text,lang="en",opts={}){return new Promise(res=>{
   if(muted||!("speechSynthesis" in window)||!text){res();return}
-  const v=pickVoice(lang);if(lang==="vi"&&!v){res();return}
+  const v=opts.voice||pickVoice(lang);if(lang==="vi"&&!v){res();return}
   const p=persona(),soft=VS.speed!=="normal";
   const u=new SpeechSynthesisUtterance(text);if(v)u.voice=v;u.lang=lang==="vi"?"vi-VN":(v?v.lang:"en-GB");
   const maleVoice=!!v&&(lang==="en"?MALE_EN.test(v.name):(p.male&&p.hint.test(v.name)));
@@ -1046,7 +1051,7 @@ function stickerTarget(){return planInfo().phase.target}
 function stickerRules(type,rec,details){
   const why=[];let n=0;const target=stickerTarget();
   if(type==="placement")return {n:0,why};
-  if(details&&details.kind==="cam"&&!details.fallback&&!(details.verify==="ai"&&!details.dispute))return {n:0,why:["Điểm đề sách Cambridge / đề online do con tự chấm nên được ghi lại để theo dõi, không tính sticker."]};
+  if(details&&details.kind==="cam"&&!details.fallback&&!(["ai","auto","parent"].includes(details.verify)&&!details.dispute))return {n:0,why:["Điểm đề sách Cambridge / đề online do con tự chấm nên được ghi lại để theo dõi, không tính sticker."]};
   if((rec.rushed||0)>=3)return {n:0,why:["Bài này làm vội từ 3 lần trở lên nên chưa tính sticker. Lần sau đọc chậm lại nhé!"]};
   if(type==="vocab"){if(rec.score!=null&&rec.score>=8){n++;why.push("Từ vựng đạt từ 8/10")}}
   else if(type==="mock"){if(details&&details.bands){const k=Object.values(details.bands).filter(b=>b>=target).length;if(k){n+=k;why.push(`${k} kỹ năng thi thử đạt từ band ${target}`)}}}
@@ -1260,7 +1265,7 @@ function allFocusTasks(){const c=camNext();return [
  {id:"vocab",skill:"vocab",t:"Từ vựng",s:`${computeQuota()} từ · thẻ nhớ, nghe – viết chính tả, kiểm tra`,done:doneToday(s=>s.type==="vocab")},
  {id:"listen",skill:"listening",t:"Nghe IELTS",s:`1 bài · còn ${bankLeft(LISTENING_BANK,"L")}/${LISTENING_BANK.length} bài con chưa nghe`,done:doneToday(s=>s.type==="listening"&&!(s.details&&s.details.kind))},
  {id:"dict",skill:"listening",t:"Nghe chép chính tả",s:"6 câu · nghe từng câu rồi gõ lại",done:doneToday(s=>s.details&&s.details.kind==="dict")},
- {id:"cam",skill:"listening",t:"Đề thật: đề chính thức online / sách Cambridge",s:S.camBook?`Cambridge ${c.book} · Test ${c.test} · Part ${c.part}`:`${webNext().label}`,done:doneToday(s=>s.details&&s.details.kind==="cam")},
+ {id:"cam",skill:"listening",t:"Đề thi Nghe (như thi thật)",s:S.camBook?`Cambridge ${c.book} · Test ${c.test} · Part ${c.part}`:`Part ${examPart()} · làm ngay trong app, cô chấm ngay`,done:doneToday(s=>s.details&&s.details.kind==="cam")},
  {id:"extra",skill:"listening",t:"Nghe thêm: BBC 6 Minute English",s:"1 tập ~6 phút · trả lời 3 câu, ghi 3 từ mới",done:doneToday(s=>s.details&&s.details.kind==="extra")}]}
 function altId(){const k=dayKey();const did=id=>doneToday(s=>s.details&&s.details.kind===id);if(did("cam"))return "cam";if(did("extra"))return "extra";return daysBetween(S.firstDay||k,k)%2===0?"cam":"extra"}
 function focusTasks(){const a=altId();return allFocusTasks().filter(t=>t.id!==(a==="cam"?"extra":"cam"))}
@@ -1345,7 +1350,7 @@ const TASK_GUIDE={
  listen:["Đọc trước câu hỏi bên dưới (khoảng 30 giây).","Bấm ▶ Nghe bài, vừa nghe vừa điền. Được nghe 2 lần.","Bấm Nộp bài, xem câu sai và lời giải thích."],
  dict:["Nghe câu (được nghe 3 lần, có nút nghe chậm 🐢).","Gõ lại đúng từng chữ con nghe được.","Bấm Kiểm tra: chữ gạch đỏ là chữ con nghe sai."],
  extra:["Bấm ▶ Mở 6 Minute English, chọn tập mới nhất con chưa nghe.","Nghe 1 lần không xem chữ (khó thì nghe lần 2).","Quay về app: ghi tên tập, tóm tắt 1–2 câu, 3 từ mới."],
- cam:["Bấm ▶ Mở đề hôm nay – app đã chọn sẵn đề cho con.","Nghe 1 lần, gõ đáp án thẳng vào ô trên trang đề, rồi bấm Check answers.","Chụp màn hình bài làm + đáp án, về app chọn ảnh. Cô chấm, con viết lý do câu sai."]};
+ cam:["Bấm ▶ Bắt đầu đề thi – làm ngay trong app, không cần mở web.","Đọc câu hỏi trước, nghe 1 lần, vừa nghe vừa điền.","Nộp bài, viết lý do cho từng câu sai."]};
 let justFinished=false;
 function nextFocus(){const t=focusTasks();const i=t.findIndex(x=>!x.done);return i<0?null:Object.assign({n:i+1,total:t.length},t[i])}
 function runFocus(id){({vocab:startVocab,listen:()=>chooseSource("listening"),dict:startDictation,cam:()=>startCambridge(),extra:startExtra})[id]()}
@@ -1357,28 +1362,54 @@ function saveCam(n,online){
   showResult(rec,`${title}: ${n}/10 câu đúng`);
 }
 const ERR_TYPES=["Sai chính tả","Số / ngày / giờ","Bị bẫy (người nói đổi ý)","Không kịp theo","Không biết từ đó"];
-function answerSheet(c){if(c.online&&!c.short&&!c.paper)return webResult(c);return answerSheetFull(c)}
+function answerSheet(c){if(c.online&&!c.short&&(c.rec||!c.paper))return webResult(c);return answerSheetFull(c)}
 const CAM_TIP={"Sai chính tả":"Luyện thêm Nghe chép chính tả và dạng nghe – viết từ.","Số / ngày / giờ":"Khi nghe số, viết ngay ra số; luyện đọc to số điện thoại, ngày tháng.","Bị bẫy (người nói đổi ý)":"Nghe tới hết câu: các từ but / actually / sorry thường báo đáp án đổi.","Không kịp theo":"Đọc trước câu hỏi, gạch chân từ khoá; luyện Section 3–4.","Không biết từ đó":"Ghi các từ này vào sổ và học lại trong phần Từ vựng."};
 function camSave(c,ttl,n,tot,wrong,extra={}){const imgs=extra._imgs||[];const ex={...extra};delete ex._imgs;
   const errs={};wrong.forEach(w=>{if(w.why)errs[w.why]=(errs[w.why]||0)+1});
   session.active=Math.max(session.active,8*60);
   const rec=endSession(tot?n/tot*10:0,{kind:"cam",correct:n,total:tot,band:c.short?null:rawToBand(n*4),title:ttl,webId:c.webId||null,redo:!!c.redo,errors:errs,wrong,direct:!!c.direct,...ex});if(imgs.length)proofPut(rec.id,imgs);
   if(c.online&&c.webId)webAdvance(c.webId);
-  if(!c.online){let nx={...c,part:c.part+1};if(nx.part>4){nx.part=1;nx.test++}if(nx.test>4){nx.test=1;nx.book=nx.book>=20?15:nx.book+1}S.cam=nx}
+  if(!c.online&&!c.exam){let nx={...c,part:c.part+1};if(nx.part>4){nx.part=1;nx.test++}if(nx.test>4){nx.test=1;nx.book=nx.book>=20?15:nx.book+1}S.cam=nx}
   S.camErr=S.camErr||{};Object.entries(errs).forEach(([t,v])=>S.camErr[t]=(S.camErr[t]||0)+v);save();
   const top=Object.entries(S.camErr).sort((x,y)=>y[1]-x[1])[0];
   showResult(rec,`${ttl}: ${n}/${tot} câu đúng`,`${ex.verify?`<p class="small"><b>${VLABEL[ex.verify]}</b>${ex.dispute?" · con báo cô chấm nhầm, bố mẹ sẽ xem lại ảnh":""}</p>`:""}${wrong.length?`<p><b>Câu sai</b></p>${wrong.map(w=>`<p class="small">Câu ${w.q}: con viết <b>${esc(w.a||"(trống)")}</b>${w.fix?` → đúng là <b>${esc(w.fix)}</b>`:""}${w.why?" · "+esc(w.why):""}${w.rs?`<br><span class="muted">Con giải thích: ${esc(w.rs)}</span>`:""}</p>`).join("")}`:"<p>Đúng cả 10 câu!</p>"}${top?`<p class="small"><b>Lỗi con hay gặp nhất:</b> ${esc(top[0])} (${top[1]} lần). ${esc(CAM_TIP[top[0]])}</p>`:""}`);
 }
 /* v2.11: ảnh bằng chứng + cô chấm từ ảnh + bố mẹ đối chiếu */
-const VLABEL={ai:"✔ Cô đã chấm từ ảnh con chụp",pending:"Con tự khai – bố mẹ sẽ đối chiếu ảnh",noproof:"⚠ Không có ảnh bằng chứng"};
+const VLABEL={auto:"✔ App tự chấm (đề thi trong app)",parent:"✔ Bố mẹ đã chấm cùng con",ai:"✔ Cô đã chấm từ ảnh con chụp",pending:"Con tự khai – bố mẹ sẽ đối chiếu ảnh",noproof:"⚠ Không có ảnh bằng chứng"};
 function pdb(){return new Promise((res,rej)=>{if(!window.indexedDB)return rej("noidb");const r=indexedDB.open("ielts-proof",1);r.onupgradeneeded=()=>r.result.createObjectStore("img");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function proofPut(id,arr){try{const db=await pdb();await new Promise((res,rej)=>{const t=db.transaction("img","readwrite");t.objectStore("img").put({arr,t:Date.now()},id);t.oncomplete=res;t.onerror=()=>rej(t.error)});const st=db.transaction("img","readwrite").objectStore("img"),cur=st.openCursor(),lim=Date.now()-45*864e5;cur.onsuccess=()=>{const c=cur.result;if(!c)return;if(c.value.t<lim)c.delete();c.continue()}}catch(e){}}
 async function proofGet(id){try{const db=await pdb();return await new Promise(res=>{const r=db.transaction("img").objectStore("img").get(id);r.onsuccess=()=>res(r.result?r.result.arr:null);r.onerror=()=>res(null)})}catch(e){return null}}
 function shrinkImg(file){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>{const url=fr.result;const im=new Image();im.onload=()=>{try{const sc=Math.min(1,1600/Math.max(im.width,im.height));const cv=document.createElement("canvas");cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL("image/jpeg",0.72))}catch(e){res(url)}};im.onerror=()=>res(null);im.src=url};fr.onerror=()=>res(null);fr.readAsDataURL(file)})}
-async function aiCheckProof(imgs,first,childAns){
+/* v3.1: khung hình từ ghi màn hình */
+function addFrame(st,src,w,h){const sc=Math.min(1,1400/Math.max(w,h));const cv=document.createElement("canvas");cv.width=Math.round(w*sc);cv.height=Math.round(h*sc);cv.getContext("2d").drawImage(src,0,0,cv.width,cv.height);
+  const sm=document.createElement("canvas");sm.width=sm.height=32;const sx=sm.getContext("2d");sx.drawImage(cv,0,0,32,32);const px=sx.getImageData(0,0,32,32).data,g=[];for(let i=0;i<px.length;i+=4)g.push((px[i]+px[i+1]+px[i+2])/3);
+  const j=st.sig.findIndex(o=>o.reduce((a,x,i)=>a+Math.abs(x-g[i]),0)/1024<2),u=cv.toDataURL("image/jpeg",0.6);if(j>=0){st.sig.splice(j,1);st.out.splice(j,1)}st.sig.push(g);st.out.push(u);if(st.out.length>30){st.out.shift();st.sig.shift()}}
+let SCR={on:false};
+function canRecord(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia)&&!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)}
+async function scrStart(){if(!canRecord())return false;try{const st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5},audio:false});const v=document.createElement("video");v.muted=true;v.playsInline=true;v.srcObject=st;await v.play();
+  SCR={on:true,st,v,out:[],sig:[],t0:Date.now()};const grab=()=>{try{if(v.videoWidth)addFrame(SCR,v,v.videoWidth,v.videoHeight)}catch(e){}};SCR.grab=grab;SCR.iv=setInterval(grab,2000);
+  st.getVideoTracks()[0].onended=()=>{if(!SCR.on)return;SCR.on=false;clearInterval(SCR.iv);if(SCR.onEnd)SCR.onEnd()};return true}catch(e){return false}}
+function scrStop(){if(!SCR.st)return [];if(SCR.on)SCR.grab();clearInterval(SCR.iv);SCR.on=false;try{SCR.st.getTracks().forEach(t=>t.stop())}catch(e){}const o=SCR.out.slice(-16);SCR={on:false};return o}
+function iphoneRecHelp(){return modal(`<h3>⏺ Ghi màn hình trên iPhone</h3><p>iPhone không cho app tự bật ghi màn hình, con bật bằng tay (chỉ 2 giây):</p><ol class="small"><li>Vuốt xuống từ <b>góc trên bên phải</b> màn hình (mở Trung tâm điều khiển).</li><li>Bấm nút <b>⏺ Ghi màn hình</b>, chờ đếm 3–2–1.</li><li>Làm bài trên trang đề, xem đáp án.</li><li>Bấm <b>chấm đỏ</b> trên cùng màn hình để dừng – video tự lưu vào Ảnh.</li><li>Về app bấm <b>🎬 Chọn video</b>.</li></ol><p class="small muted">Chưa thấy nút ⏺? Bố mẹ vào Cài đặt → Trung tâm điều khiển → thêm “Ghi màn hình”.</p>`,[{label:"Con hiểu rồi",cls:"teal"}])}
+function videoFrames(file,onProg){return new Promise(res=>{
+  const url=URL.createObjectURL(file),v=document.createElement("video");v.muted=true;v.playsInline=true;v.setAttribute("playsinline","");v.preload="auto";v.src=url;
+  const out=[],sig=[];let done=false;const end=()=>{if(done)return;done=true;URL.revokeObjectURL(url);res(out)};setTimeout(end,90000);
+  const grab=()=>new Promise(r=>{let ok=false;const f=()=>{if(ok)return;ok=true;v.removeEventListener("seeked",f);r()};v.addEventListener("seeked",f);setTimeout(f,4000)});
+  v.onerror=end;
+  v.onloadedmetadata=async()=>{
+    try{await v.play();v.pause()}catch(e){}
+    const d=isFinite(v.duration)&&v.duration>0?v.duration:0;if(!d){end();return}
+    const ts=[];for(let i=0;i<8;i++)ts.push(d*(0.05+0.75*i/7));for(let i=0;i<10;i++)ts.push(d*(0.8+0.195*i/9));
+    const st={out,sig};
+    for(let n=0;n<ts.length;n++){if(done)return;v.currentTime=Math.min(ts[n],d-0.05);await grab();
+      try{addFrame(st,v,v.videoWidth,v.videoHeight)}catch(e){}
+      onProg&&onProg(n+1,ts.length)}
+    end()};
+})}
+async function aiCheckProof(imgs,first,childAns,isVideo){
   const sample=await getSample();if(!sample||!imgs.length)return null;
   const content=imgs.map(u=>({type:"image",source:{type:"base64",media_type:u.slice(5,u.indexOf(";")),data:u.slice(u.indexOf(",")+1)}}));
-  content.push({type:"text",text:`These are screenshots/photos from an IELTS Listening practice test, questions ${first}-${first+9}. ${childAns?`The student typed these answers in another app: ${JSON.stringify(childAns.map((a,k)=>({q:first+k,student:a||""})))}. The images show the official answer key.`:`The images show the student's own typed answers on the test page and the official answer key.`}
+  content.push({type:"text",text:`${isVideo?`These are frames from a screen recording of the student doing an IELTS Listening practice test (questions ${first}-${first+9}), in time order. The student's final answer for each question is the LAST visible version of it.`:`These are screenshots/photos from an IELTS Listening practice test, questions ${first}-${first+9}.`} ${childAns?`The student typed these answers in another app: ${JSON.stringify(childAns.map((a,k)=>({q:first+k,student:a||""})))}. The images show the official answer key.`:`The images show the student's own typed answers on the test page and the official answer key.`}
 For each question ${first}..${first+9} give: student = the student's answer exactly as written (null if not visible), key = the official answer (null if not visible), correct = true/false using official IELTS marking (not case-sensitive; spelling must be exact; words in brackets are optional; "/" means alternatives; numbers may be digits or words), or null if the student's answer or the key is not visible. Never guess.
 Reply with JSON only: {"items":[{"q":${first},"student":"...","key":"...","correct":true}],"note":"one short sentence in Vietnamese if something was unclear, else empty"}`});
   try{const r=await sample.json([{role:"user",content}],{modelTier:"default"});
@@ -1388,22 +1419,38 @@ Reply with JSON only: {"items":[{"q":${first},"student":"...","key":"...","corre
   }catch(e){return null}
 }
 function proofStep(o){
-  const c=o.c,imgs=[];let aiReady=false;
+  const c=o.c;let imgs=[],isVideo=false,vbusy="";let aiReady=false;
   const draw=()=>{main.innerHTML=`${sessionHead(o.direct?"Kết quả trên trang đề":"Ảnh đáp án")}<div class="panel">
-    ${o.direct?`<ol class="small" style="margin:0 0 10px;padding-left:18px"><li>Trên trang đề, con <b>gõ đáp án thẳng vào ô</b> trong lúc nghe.</li><li>Nghe xong bấm nộp bài / <b>Check answers</b>.</li><li><b>Chụp màn hình</b> (bấm cùng lúc nút sườn + nút tăng âm lượng): trang có <b>bài con đã gõ</b> và trang <b>đáp án</b>. Được 1–4 ảnh.</li><li>Về đây bấm 📷 chọn các ảnh đó.</li></ol>`:`<p class="small">${c.online?"Mở đáp án (Answer key) của đề trên trang web và <b>chụp màn hình</b>":"Mở trang <b>Answer Key</b> cuối sách và <b>chụp ảnh</b>"} phần đáp án câu ${o.first}–${o.first+9}.</p>`}
-    <label class="btn teal" style="width:100%;justify-content:center;cursor:pointer">📷 Chọn ảnh chụp màn hình<input type="file" id="pfIn" accept="image/*" multiple style="display:none"></label>
-    <div class="row" style="gap:8px;margin:10px 0;flex-wrap:wrap">${imgs.map((u,i)=>`<span style="position:relative;display:inline-block"><img src="${u}" alt="ảnh ${i+1}" style="height:110px;border-radius:8px;border:1px solid var(--line)"><button class="chip" data-del="${i}" style="position:absolute;top:2px;right:2px;padding:2px 8px">✕</button></span>`).join("")}</div>
-    <p class="small muted">${imgs.length?`Đã chọn ${imgs.length} ảnh. `:"Chưa có ảnh. "}${aiReady?"Cô sẽ đọc ảnh và chấm giúp con.":"Bố mẹ sẽ xem ảnh để đối chiếu với kết quả con khai."}</p>
-    <div class="row"><button class="btn teal" id="pfGo" ${imgs.length?"":"disabled"}>Tiếp tục</button></div>
+    ${SCR.on?`<div class="banner" style="border-color:var(--rose)"><b>🔴 Đang ghi màn hình.</b> Mở trang đề, làm bài, bấm Check answers và để <b>đáp án hiện trên màn hình vài giây</b>. Xong quay lại đây bấm Dừng.</div>
+      <a class="btn ghost" href="${esc(c.url||"")}" target="_blank" rel="noopener" style="width:100%;justify-content:center;margin-bottom:8px">🌐 Mở trang đề</a>
+      <button class="btn teal" id="scrStop" style="width:100%;justify-content:center;margin-bottom:12px">⏹ Dừng ghi và nộp bài</button>`:""}
+    ${o.direct?`<ol class="small" style="margin:0 0 10px;padding-left:18px"><li>Trên trang đề, con <b>gõ đáp án thẳng vào ô</b> trong lúc nghe.</li><li>Nghe xong bấm nộp bài / <b>Check answers</b>.</li><li><b>Chụp màn hình</b> (bấm cùng lúc nút sườn + nút tăng âm lượng): trang có <b>bài con đã gõ</b> và trang <b>đáp án</b>. Được 1–4 ảnh.</li><li>Về đây bấm 📷 chọn các ảnh đó.</li></ol><p class="small" style="margin:0 0 10px"><b>Hoặc dễ hơn:</b> trước khi làm bài, bật <b>Ghi màn hình</b>, làm xong tắt, về đây bấm <b>🎬 Chọn video</b>. ${canRecord()?"":`<button class="btn ghost small" id="recHelp2">⏺ Cách bật ghi màn hình</button>`}</p>`:`<p class="small">${c.online?"Mở đáp án (Answer key) của đề trên trang web và <b>chụp màn hình</b>":"Mở trang <b>Answer Key</b> cuối sách và <b>chụp ảnh</b>"} phần đáp án câu ${o.first}–${o.first+9}.</p>`}
+    <div class="row" style="gap:8px"><label class="btn teal" style="flex:1;justify-content:center;cursor:pointer">📷 Chọn ảnh<input type="file" id="pfIn" accept="image/*" multiple style="display:none"></label><label class="btn teal" style="flex:1;justify-content:center;cursor:pointer">🎬 Chọn video<input type="file" id="pvIn" accept="video/*" style="display:none"></label></div>
+    ${vbusy?`<p class="small"><b>⏳ ${vbusy}</b></p>`:""}
+    <div class="row" style="gap:8px;margin:10px 0;flex-wrap:wrap">${isVideo?imgs.slice(-6).map((u,i)=>`<img src="${u}" alt="khung hình" style="height:80px;border-radius:6px;border:1px solid var(--line)">`).join("")+(imgs.length?` <button class="chip" id="pvDel">✕ Bỏ video</button>`:""):imgs.map((u,i)=>`<span style="position:relative;display:inline-block"><img src="${u}" alt="ảnh ${i+1}" style="height:110px;border-radius:8px;border:1px solid var(--line)"><button class="chip" data-del="${i}" style="position:absolute;top:2px;right:2px;padding:2px 8px">✕</button></span>`).join("")}</div>
+    <p class="small muted">${isVideo&&imgs.length?`Đã lấy ${imgs.length} khung hình từ video. `:imgs.length?`Đã chọn ${imgs.length} ảnh. `:"Chưa có ảnh hoặc video. "}${aiReady?"Cô sẽ đọc ảnh và chấm giúp con.":"Bố mẹ sẽ xem ảnh để đối chiếu với kết quả con khai."}</p>
+    <div class="row"><button class="btn teal" id="pfGo" ${imgs.length&&!vbusy?"":"disabled"}>Tiếp tục</button></div>
+    <div class="panel" style="margin:14px 0 0;padding:10px 12px"><p class="small" style="margin:0 0 6px"><b>👨‍👩‍👧 Bố mẹ đang ngồi cùng?</b> Không cần chụp ảnh: bố mẹ nhập PIN rồi chấm cùng con.</p><div class="row" style="gap:6px"><input type="password" inputmode="numeric" id="pfPin" placeholder="PIN bố mẹ" style="max-width:140px"><button class="btn small teal" id="pfPinOk">Bố mẹ chấm cùng</button></div></div>
     <p class="small muted" style="margin-top:14px"><button class="btn ghost small" id="pfNo">Không chụp được ảnh</button></p>
     ${o.direct?`<p class="small muted">Trang đề không có ô để gõ? <button class="btn ghost small" id="wrPaper">Dùng phiếu 10 ô trong app</button></p>${c.redo?"":`<button class="btn ghost small" id="asLost" style="width:100%;justify-content:center">😕 Con không tìm thấy đề → làm bài trong app</button>`}<p class="small"><a href="${esc(c.url||"")}" target="_blank" rel="noopener">Mở lại trang đề</a></p>`:""}</div>`;
     bindQuit();
-    $("#pfIn").onchange=async e=>{const fs=[...e.target.files].slice(0,4-imgs.length);for(const f of fs){const u=await shrinkImg(f);if(u)imgs.push(u)}draw()};
+    $("#pfIn").onchange=async e=>{if(isVideo){imgs=[];isVideo=false}const fs=[...e.target.files].slice(0,4-imgs.length);for(const f of fs){const u=await shrinkImg(f);if(u)imgs.push(u)}draw()};
+    $("#pvIn").onchange=async e=>{const f=e.target.files[0];if(!f)return;vbusy="Đang đọc video…";draw();const fr=await videoFrames(f,(n,t)=>{vbusy=`Đang cắt khung hình ${n}/${t}…`;const el=main.querySelector("p.small b");if(el&&el.textContent.startsWith("⏳"))el.textContent="⏳ "+vbusy});vbusy="";
+      if(!fr.length){toast("Không đọc được video này. Con thử chụp ảnh màn hình nhé.");draw();return}imgs=fr;isVideo=true;draw()};
+    if($("#pvDel"))$("#pvDel").onclick=()=>{imgs=[];isVideo=false;draw()};
     main.querySelectorAll("[data-del]").forEach(b=>b.onclick=e=>{e.preventDefault();imgs.splice(+b.dataset.del,1);draw()});
     $("#pfNo").onclick=async()=>{const r=await modal(`<h3>Không có ảnh?</h3><p>Bài này sẽ ghi <b>“không có ảnh bằng chứng”</b> trong báo cáo cho bố mẹ. Nếu chụp được, con quay lại trang đề chụp nhé.</p>`,[{label:"Để con chụp",cls:"teal"},{label:"Vẫn tiếp tục",cls:"ghost"}]);if(r.i===1)o.onDone({imgs:[],ai:null,noProof:true})};
-    $("#pfGo").onclick=async()=>{if(!imgs.length)return;let ai=null;
-      if(aiReady){main.innerHTML=`${sessionHead("Cô đang chấm")}<div class="panel"><p>⏳ Cô đang đọc ảnh và chấm bài của con… (khoảng 20–40 giây)</p></div>`;ai=await aiCheckProof(imgs,o.first,o.childAns||null);if(!ai)toast("Cô chưa đọc rõ ảnh – con tự chấm, bố mẹ sẽ đối chiếu ảnh sau.")}
-      o.onDone({imgs,ai})};
+    $("#pfPinOk").onclick=()=>{if($("#pfPin").value===S.settings.pin)o.onDone({imgs:[],ai:null,parent:true});else toast("PIN chưa đúng.")};
+    if($("#recHelp2"))$("#recHelp2").onclick=()=>iphoneRecHelp();
+    if($("#scrStop"))$("#scrStop").onclick=()=>fromRec();
+    $("#pfGo").onclick=()=>go();bindRest();
+  };
+  const fromRec=()=>{const fr=scrStop();if(!fr.length){toast("Chưa ghi được khung hình nào. Con chụp ảnh màn hình thay nhé.");draw();return}imgs=fr;isVideo=true;go()};
+  SCR.onEnd=()=>{if($("#scrStop"))fromRec()};
+  const go=async()=>{if(!imgs.length)return;let ai=null;
+      if(aiReady){main.innerHTML=`${sessionHead("Cô đang chấm")}<div class="panel"><p>⏳ Cô đang xem bài làm và chấm cho con… (khoảng 20–60 giây)</p></div>`;ai=await aiCheckProof(imgs,o.first,o.childAns||null,isVideo);if(!ai)toast("Cô chưa đọc rõ ảnh – con tự chấm, bố mẹ sẽ đối chiếu ảnh sau.")}
+      o.onDone({imgs:isVideo?imgs.slice(-6):imgs,ai,video:isVideo})};
+  const bindRest=()=>{
     if($("#wrPaper"))$("#wrPaper").onclick=()=>answerSheetFull({...c,paper:true});
     if($("#asLost"))$("#asLost").onclick=()=>camFallback({id:c.webId,label:c.label});
   };
@@ -1411,17 +1458,17 @@ function proofStep(o){
 }
 /* v2.10: con gõ đáp án ngay trên trang đề, về app chỉ báo câu sai */
 function webResult(c){
-  const first=(c.part-1)*10+1;if(!(session&&session.type==="listening"))beginSession("listening");
+  const first=c.short?1:(c.part-1)*10+1;if(!(session&&session.type==="listening"))beginSession("listening");
   proofStep({c,first,direct:true,onDone:p=>webMark(c,p)});
   say("Type your answers on the test page, then send me screenshots.","Con gõ đáp án ngay trên trang đề, chụp màn hình bài làm và đáp án rồi gửi cô nhé.");
 }
 function webMark(c,p){
-  const first=(c.part-1)*10+1,ttl=(c.label||`Đề online · Part ${c.part}`)+(c.redo?" (làm lại)":""),ai=p.ai;
+  const first=c.short?1:(c.part-1)*10+1,ttl=(c.label||`Đề online · Part ${c.part}`)+(c.redo?" (làm lại)":""),ai=p.ai;
   const sel=new Set(),val={};const g=(k,f)=>(val[k]||{})[f]===undefined?"":(val[k]||{})[f];let dispute=false;
   if(ai)ai.items.forEach(it=>{const k=it.q-first;if(it.correct===false){sel.add(k);val[k]={a:it.student||"",fix:it.key||""}}});
   const aiWrong=sel.size;
   const draw=()=>{const lk=ai&&!dispute;main.innerHTML=`${sessionHead("Câu sai và lý do")}<div class="panel">
-    ${ai?`<div class="banner ok">✔ Cô đã chấm từ ảnh của con: <b>${10-aiWrong}/10</b>.${ai.note?" "+esc(ai.note):""}</div>`:`<div class="banner">${p.noProof?"Bài này không có ảnh – bố mẹ sẽ hỏi lại con.":"Ảnh của con sẽ được bố mẹ đối chiếu."} Con <b>so kỹ từng câu</b> rồi mới bấm nhé.</div>`}
+    ${p.parent?`<div class="banner ok">👨‍👩‍👧 Bố mẹ đang chấm cùng con. Cùng so từng câu với đáp án nhé.</div>`:ai?`<div class="banner ok">✔ Cô đã chấm từ ảnh của con: <b>${10-aiWrong}/10</b>.${ai.note?" "+esc(ai.note):""}</div>`:`<div class="banner">${p.noProof?"Bài này không có ảnh – bố mẹ sẽ hỏi lại con.":"Ảnh của con sẽ được bố mẹ đối chiếu."} Con <b>so kỹ từng câu</b> rồi mới bấm nhé.</div>`}
     <p class="small">${lk?"Các câu sai cô đã đánh dấu sẵn.":"Bấm <b>số các câu con làm sai</b>"} (câu ${first}–${first+9}):</p>
     <div class="row" style="gap:6px;flex-wrap:wrap">${Array.from({length:10},(_,k)=>`<button class="chip" data-q="${k}" aria-pressed="${sel.has(k)}" ${lk?"disabled":""} style="min-width:52px;justify-content:center">${first+k}</button>`).join("")}</div>
     <p style="margin:12px 0 4px"><b>${10-sel.size}/10 câu đúng</b>${ai&&!dispute?` <button class="btn ghost small" id="wrDispute" style="margin-left:8px">Cô chấm nhầm?</button>`:""}${dispute?` <span class="small muted">(con đang sửa lại – bố mẹ sẽ xem ảnh)</span>`:""}</p>
@@ -1439,8 +1486,8 @@ function webMark(c,p){
     $("#wrSave").onclick=async()=>{
       const ks=[...sel].sort((a,b)=>a-b),miss=ks.filter(k=>g(k,"why")===""||String(g(k,"rs")).trim().length<4).map(k=>first+k);
       if(miss.length){toast(`Câu ${miss.join(", ")}: chọn loại lỗi và viết vì sao con chọn đáp án đó nhé.`);return}
-      if(!ai||dispute){const r=await modal(`<h3>Con kiểm tra lại nhé</h3><p>Con khai: ${ks.length?`sai câu <b>${ks.map(k=>first+k).join(", ")}</b>`:"<b>không sai câu nào</b>"} → <b>${10-ks.length}/10</b>.</p><p class="small">${p.noProof?"Bài không có ảnh nên bố mẹ sẽ hỏi lại con.":"Bố mẹ sẽ so với ảnh con chụp."} Đúng như trên trang đề chứ?</p>`,[{label:"Đúng rồi, lưu",cls:"teal"},{label:"Để con xem lại",cls:"ghost"}]);if(r.i!==0)return}
-      camSave({...c,direct:true},ttl,10-ks.length,10,ks.map(k=>({q:first+k,a:String(g(k,"a")).trim(),fix:String(g(k,"fix")).trim(),why:ERR_TYPES[g(k,"why")],rs:String(g(k,"rs")).trim()})),{verify:ai?"ai":p.noProof?"noproof":"pending",dispute,aiScore:ai?10-aiWrong:null,_imgs:p.imgs});
+      if(!p.parent&&(!ai||dispute)){const r=await modal(`<h3>Con kiểm tra lại nhé</h3><p>Con khai: ${ks.length?`sai câu <b>${ks.map(k=>first+k).join(", ")}</b>`:"<b>không sai câu nào</b>"} → <b>${10-ks.length}/10</b>.</p><p class="small">${p.noProof?"Bài không có ảnh nên bố mẹ sẽ hỏi lại con.":"Bố mẹ sẽ so với ảnh con chụp."} Đúng như trên trang đề chứ?</p>`,[{label:"Đúng rồi, lưu",cls:"teal"},{label:"Để con xem lại",cls:"ghost"}]);if(r.i!==0)return}
+      camSave({...c,direct:true},ttl,10-ks.length,10,ks.map(k=>({q:first+k,a:String(g(k,"a")).trim(),fix:String(g(k,"fix")).trim(),why:ERR_TYPES[g(k,"why")],rs:String(g(k,"rs")).trim()})),{verify:p.parent?"parent":ai?"ai":p.noProof?"noproof":"pending",dispute,aiScore:ai?10-aiWrong:null,video:!!p.video,_imgs:p.imgs});
     };
   };
   draw();scrollTo(0,0);
@@ -1455,7 +1502,7 @@ function answerSheetFull(c){
   $("#asDone").onclick=()=>{const ans=Array.from({length:10},(_,k)=>$("#as"+k).value.trim());if(ans.filter(Boolean).length<(c.short?1:5)){toast("Con mới điền "+ans.filter(Boolean).length+" câu – điền thêm rồi chấm nhé.");return}
     const mark=Array(10).fill(null),why=Array(10).fill(null),fix=Array(10).fill(""),rs=Array(10).fill("");
     let P={imgs:[],ai:null},dispute=false,aiN=null;
-    const draw=()=>{const lk=P.ai&&!dispute;main.innerHTML=`${sessionHead(P.ai?"Kết quả cô chấm":"Chấm theo đáp án")}<div class="panel">${P.ai?`<div class="banner ok">✔ Cô đã chấm từ ảnh đáp án: <b>${aiN}/${c.short?ans.filter(Boolean).length:10}</b>. Con viết lý do cho từng câu sai.${P.ai.note?" "+esc(P.ai.note):""} ${!dispute?`<button class="btn ghost small" id="asDispute">Cô chấm nhầm?</button>`:""}</div>`:`<div class="banner">${P.noProof?"Bài này không có ảnh – bố mẹ sẽ hỏi lại con.":"Ảnh đáp án sẽ được bố mẹ đối chiếu."} Con so kỹ từng câu nhé.</div>`}<p class="small">${on?"Nộp bài trên trang đề để xem đáp án":`Mở <b>Answer Key</b> cuối sách Cambridge ${c.book}, Test ${c.test}`}. Bấm <b>✓</b> nếu đúng, <b>✗</b> nếu sai. Câu sai: ghi <b>đáp án đúng</b>, chọn <b>loại lỗi</b> và viết <b>vì sao lúc đó con chọn đáp án ấy</b> (con nghe thấy gì, nghĩ gì) – để bố mẹ và cô biết con yếu ở đâu.</p>
+    const draw=()=>{const lk=P.ai&&!dispute;main.innerHTML=`${sessionHead(P.ai?"Kết quả cô chấm":"Chấm theo đáp án")}<div class="panel">${P.parent?`<div class="banner ok">👨‍👩‍👧 Bố mẹ đang chấm cùng con.</div>`:P.ai?`<div class="banner ok">✔ Cô đã chấm từ ảnh đáp án: <b>${aiN}/${c.short?ans.filter(Boolean).length:10}</b>. Con viết lý do cho từng câu sai.${P.ai.note?" "+esc(P.ai.note):""} ${!dispute?`<button class="btn ghost small" id="asDispute">Cô chấm nhầm?</button>`:""}</div>`:`<div class="banner">${P.noProof?"Bài này không có ảnh – bố mẹ sẽ hỏi lại con.":"Ảnh đáp án sẽ được bố mẹ đối chiếu."} Con so kỹ từng câu nhé.</div>`}<p class="small">${on?"Nộp bài trên trang đề để xem đáp án":`Mở <b>Answer Key</b> cuối sách Cambridge ${c.book}, Test ${c.test}`}. Bấm <b>✓</b> nếu đúng, <b>✗</b> nếu sai. Câu sai: ghi <b>đáp án đúng</b>, chọn <b>loại lỗi</b> và viết <b>vì sao lúc đó con chọn đáp án ấy</b> (con nghe thấy gì, nghĩ gì) – để bố mẹ và cô biết con yếu ở đâu.</p>
       ${ans.map((a,k)=>`<div class="q" style="border-bottom:1px solid var(--line);padding:8px 0"><div class="row" style="justify-content:space-between"><span><span class="qn">${first+k}</span> Con viết: <b>${esc(a||"(trống)")}</b></span><span class="row"><button class="btn small ${mark[k]===1?"teal":"ghost"}" data-ok="${k}" ${lk?"disabled":""}>✓</button><button class="btn small ${mark[k]===0?"":"ghost"}" data-no="${k}" ${lk?"disabled":""}>✗</button></span></div>
       ${mark[k]===0?`<input type="text" data-fix="${k}" placeholder="Đáp án đúng" value="${esc(fix[k])}" style="margin-top:6px"><input type="text" data-rs="${k}" placeholder="Vì sao con chọn “${esc(a||"để trống")}”? (VD: nghe thấy fifteen tưởng là fifty)" value="${esc(rs[k])}" style="margin-top:6px"><div class="row" style="margin-top:6px;gap:6px">${ERR_TYPES.map((t,j)=>`<button class="chip" data-why="${k}:${j}" aria-pressed="${why[k]===j}">${t}</button>`).join("")}</div>`:""}</div>`).join("")}
       <div class="row" style="margin-top:10px"><button class="btn teal" id="asSave">Lưu kết quả</button></div></div>`;bindQuit();
@@ -1468,8 +1515,8 @@ function answerSheetFull(c){
       $("#asSave").onclick=async()=>{const used=ans.map((a,k)=>c.short?!!a||mark[k]!=null:true);if(mark.some((m,k)=>used[k]&&m===null)){toast("Con chấm đủ các câu (✓ hoặc ✗) nhé.");return}
         const miss=mark.map((m,k)=>m===0&&(why[k]==null||rs[k].trim().length<4)?first+k:null).filter(Boolean);if(miss.length){toast(`Câu ${miss.join(", ")}: chọn loại lỗi và viết vì sao con chọn đáp án đó nhé.`);return}        const n=mark.filter(m=>m===1).length,tot=c.short?mark.filter((m,k)=>used[k]&&m!==null).length:10;
         const wrong=ans.map((a,k)=>mark[k]===0?{q:first+k,a,fix:fix[k],why:why[k]==null?"":ERR_TYPES[why[k]],rs:rs[k].trim()}:null).filter(Boolean);
-        if(!P.ai||dispute){const r=await modal(`<h3>Con kiểm tra lại nhé</h3><p>Con chấm: <b>${n}/${tot}</b> câu đúng${wrong.length?`, sai câu <b>${wrong.map(w=>w.q).join(", ")}</b>`:""}.</p><p class="small">${P.noProof?"Bài không có ảnh nên bố mẹ sẽ hỏi lại con.":"Bố mẹ sẽ so với ảnh đáp án con chụp."} Đúng chứ?</p>`,[{label:"Đúng rồi, lưu",cls:"teal"},{label:"Để con xem lại",cls:"ghost"}]);if(r.i!==0)return}
-        camSave(c,ttl,n,tot,wrong,{verify:P.ai?"ai":P.noProof?"noproof":"pending",dispute,aiScore:P.ai?aiN:null,_imgs:P.imgs});
+        if(!P.parent&&(!P.ai||dispute)){const r=await modal(`<h3>Con kiểm tra lại nhé</h3><p>Con chấm: <b>${n}/${tot}</b> câu đúng${wrong.length?`, sai câu <b>${wrong.map(w=>w.q).join(", ")}</b>`:""}.</p><p class="small">${P.noProof?"Bài không có ảnh nên bố mẹ sẽ hỏi lại con.":"Bố mẹ sẽ so với ảnh đáp án con chụp."} Đúng chứ?</p>`,[{label:"Đúng rồi, lưu",cls:"teal"},{label:"Để con xem lại",cls:"ghost"}]);if(r.i!==0)return}
+        camSave(c,ttl,n,tot,wrong,{verify:P.parent?"parent":P.ai?"ai":P.noProof?"noproof":"pending",dispute,aiScore:P.ai?aiN:null,_imgs:P.imgs});
       }};
     proofStep({c,first,childAns:ans,onDone:p=>{P=p;if(p.ai){aiN=0;p.ai.items.forEach(it=>{const k=it.q-first;if(k<0||k>9)return;if(c.short&&!ans[k])return;if(it.correct===true){mark[k]=1;aiN++}else if(it.correct===false){mark[k]=0;if(it.key)fix[k]=it.key}})}draw();scrollTo(0,0)}})};
 }
@@ -1492,26 +1539,61 @@ function webNext(){const W=webItems(),d=webDone();const it=W.find(x=>!d.includes
 function webAdvance(id){S.webDone=webDone();if(!S.webDone.includes(id))S.webDone.push(id);else{S.webDone=S.webDone.filter(x=>x!==id);S.webDone.push(id)}save()}
 function camFallback(w){
   const label=(w&&w.label)||"đề online";S.notFound=(S.notFound||[]).concat([{date:dayKey(),label}]).slice(-30);if(w&&w.id)webAdvance(w.id);save();
+  session=null;$("#tabs").classList.remove("locked");startExam();return;
   const set=pickFresh(LISTENING_BANK,"L");if(!session)beginSession("listening");
-  say("No problem. Let's do a test inside the app instead.","Không sao con nhé. Mình làm bài nghe ngay trong app thay cho đề đó. Bố mẹ sẽ giúp con tìm đề sau.");
   runQuizSet(clone(set),"listening",{onDone:res=>{const rec=endSession(res.correct/res.total*10,{kind:"cam",fallback:true,correct:res.correct,total:res.total,band:rawToBand(res.correct/res.total*40),title:"Bài trong app (con không tìm thấy đề: "+label+")",notFound:label});showResult(rec,`${res.correct}/${res.total} câu đúng`,`<p class="small muted">Con đã báo không tìm thấy <b>${esc(label)}</b>. Bố mẹ sẽ thấy trong báo cáo và giúp con. Lần sau app chuyển sang đề khác.</p>`)}});
+}
+function examPart(){return ((S.examPart||0)%4)+1}
+async function startExam(){
+  const part=examPart();let set=null;const ai=await getSample();
+  if(ai){loading(`Cô đang soạn đề thi Part ${part} mới cho con`);set=await genListening(10,part,true)}
+  if(!set){const pool=LISTENING_BANK.filter(x=>(x.sec||1)===part);set=pickFresh(pool.length>=2?pool:LISTENING_BANK,"L")}
+  set=clone(set);beginSession("listening");
+  say("Exam time. Read the questions first. You will hear the recording only once.",`Thi thật Part ${part}: đọc câu hỏi trước, bấm nghe, chỉ nghe một lần nhé.`);
+  runQuizSet(set,"listening",{mock:true,partLabel:`Đề thi trong app · Part ${part} · như thi thật: đọc câu hỏi trước 30 giây, chỉ nghe 1 lần, cô chấm ngay`,onDone:res=>examReasons(set,res,part)});
+}
+function examReasons(set,res,part){
+  const ttl=`Đề thi trong app · Part ${part}: ${set.title||""}`;
+  const W=set.questions.map((q,i)=>res.ok[i]?null:i).filter(i=>i!=null),why={},rs={};
+  const ansOf=q=>q.type==="gap"?(Array.isArray(q.answer)?q.answer[0]:q.answer):q.answer;
+  const finish=()=>{S.examPart=(S.examPart||0)+1;camSave({exam:true,part},ttl,res.correct,res.total,W.map(i=>({q:i+1,a:res.answers[i]||"",fix:String(ansOf(set.questions[i])),why:ERR_TYPES[why[i]]||"",rs:(rs[i]||"").trim()})),{verify:"auto"})};
+  if(!W.length){finish();return}
+  const draw=()=>{main.innerHTML=`${sessionHead("Câu sai và lý do")}<div class="panel"><div class="banner ok">✔ Cô đã chấm: <b>${res.correct}/${res.total}</b> câu đúng. Con xem từng câu sai và viết <b>vì sao lúc đó con chọn như vậy</b>.</div>
+    ${W.map(i=>{const q=set.questions[i];return `<div class="q" style="border-top:1px solid var(--line);padding:10px 0"><p style="margin:0"><span class="qn">${i+1}</span> ${esc(q.q)}</p><p class="small" style="margin:6px 0">Con chọn: <b>${esc(res.answers[i]||"(bỏ trống)")}</b> · Đáp án: <b>${esc(ansOf(q))}</b>${q.explain?`<br><span class="muted">${esc(q.explain)}</span>`:""}</p>
+      <input type="text" data-rs="${i}" placeholder="Vì sao con chọn như vậy? (VD: nghe fifteen tưởng là fifty)" value="${esc(rs[i]||"")}">
+      <div class="row" style="margin-top:6px;gap:6px">${ERR_TYPES.map((t,j)=>`<button class="chip" data-why="${i}:${j}" aria-pressed="${why[i]===j}">${t}</button>`).join("")}</div></div>`}).join("")}
+    <div class="row" style="margin-top:12px"><button class="btn teal" id="exSave">Lưu kết quả</button></div></div>`;
+    bindQuit();
+    main.querySelectorAll("[data-rs]").forEach(el=>el.oninput=()=>{rs[+el.dataset.rs]=el.value});
+    main.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const[i,j]=b.dataset.why.split(":").map(Number);why[i]=j;draw()});
+    $("#exSave").onclick=()=>{const miss=W.filter(i=>why[i]==null||(rs[i]||"").trim().length<4).map(i=>i+1);if(miss.length){toast(`Câu ${miss.join(", ")}: chọn loại lỗi và viết vì sao con chọn đáp án đó nhé.`);return}finish()};
+  };
+  draw();scrollTo(0,0);say("Now look at each mistake. Why did you choose that answer?","Giờ con xem lại từng câu sai và viết vì sao con chọn như vậy nhé.");
 }
 function startCambridge(src){
   const c=camNext();
   if(!src&&!S.camBook){
-    const W=webItems(),w=webNext(),first=w.short?1:(w.part-1)*10+1,left=W.filter(x=>!webDone().includes(x.id)).length,doneList=S.sessions.filter(s=>s.details&&s.details.kind==="cam"&&s.details.webId).slice(-6).reverse();
-    main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">Đề thật hôm nay</h2><button class="btn ghost small" id="bk">← Trang học</button></div>
-    <div class="panel" style="border:2px solid var(--teal)"><p class="small muted" style="margin:0">Cô đã chọn sẵn cho con</p><h3 style="margin:4px 0">${esc(w.label)}</h3><p class="small muted" style="margin:0 0 10px">${left>0?`Bài mới – còn ${left}/${W.length} bài chính thức con chưa làm (British Council, IDP)`:`Con đã làm hết ${W.length} bài chính thức miễn phí – đây là lượt làm lại để kiểm tra tiến bộ`}</p>
-    <ol class="small" style="margin:0 0 12px;padding-left:20px"><li>Bấm nút dưới: trang đề mở ra. Tìm <b>${esc(w.find)}</b>, bấm phát, nghe <b>1 lần</b> và <b>gõ đáp án thẳng vào ô trên trang đề</b> – không cần giấy bút.</li><li>Nghe xong bấm nộp bài / <b>Check answers</b>, rồi <b>chụp màn hình</b> bài làm và đáp án.</li><li>Bấm <b>Xong</b> (góc trên bên trái) quay về app, chọn ảnh vừa chụp – cô chấm giúp, con viết lý do câu sai.</li><li>Tìm quá <b>5 phút</b> chưa thấy đề? Quay về app, bấm nút <b>“Con không tìm thấy đề”</b>.</li></ol>
-    <a class="btn teal" id="goWeb" href="${w.url}" target="_blank" rel="noopener" style="width:100%;justify-content:center">▶ Mở đề hôm nay</a>
-    <button class="btn ghost small" id="camLost" style="width:100%;justify-content:center;margin-top:10px">😕 Con không tìm thấy đề → làm bài trong app</button></div>
-    ${doneList.length?`<div class="panel"><h3 style="margin-top:0">↺ Làm lại bài đã làm</h3><p class="small muted">Làm lại sau vài ngày để xem con đã sửa được lỗi chưa. Lượt làm lại không làm đổi bài hôm nay.</p>${doneList.map((s,i)=>`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span class="small">${esc(s.details.title)}<br><span class="muted">${fmtDate(s.date)} · ${s.details.correct}/${s.details.total} câu đúng</span></span><button class="btn ghost small" data-redo="${esc(s.details.webId)}">Làm lại</button></div>`).join("")}</div>`:""}
+    const W=webItems(),w=webNext(),left=W.filter(x=>!webDone().includes(x.id)).length,doneList=S.sessions.filter(s=>s.details&&s.details.kind==="cam"&&s.details.webId).slice(-6).reverse(),part=examPart(),desk=matchMedia("(pointer:fine)").matches&&innerWidth>=900;
+    const exam=`<div class="panel" style="border:2px solid var(--teal)"><p class="small muted" style="margin:0">Bước 4 hôm nay</p><h3 style="margin:4px 0">Đề thi Nghe · Part ${part}</h3><p class="small muted" style="margin:0 0 10px">Làm ngay trong app, như thi thật. Không cần mở trang web, không cần chụp ảnh – cô chấm ngay.</p>
+      <ol class="small" style="margin:0 0 12px;padding-left:20px"><li>Đọc câu hỏi trước khoảng 30 giây.</li><li>Bấm ▶ Nghe bài, <b>chỉ nghe 1 lần</b>, vừa nghe vừa điền.</li><li>Nộp bài, rồi viết lý do cho từng câu sai.</li></ol>
+      <button class="btn teal" id="goExam" style="width:100%;justify-content:center">▶ Bắt đầu đề thi Part ${part}</button></div>`;
+    const web=`<div class="panel"${desk?' style="border:2px solid var(--sun)"':""}><h3 style="margin-top:0">🌐 Đề chính thức (British Council, IDP)</h3><p class="small muted" style="margin:0 0 8px">Làm bất kỳ hôm nào, tiện nhất trên <b>MacBook</b>. Đề tiếp theo: <b>${esc(w.label)}</b>${left>0?` (còn ${left}/${W.length} bài)`:""}.</p>
+      ${canRecord()?`<ol class="small" style="margin:0 0 10px;padding-left:20px"><li>Bấm <b>🔴 Ghi màn hình và làm đề</b>, chọn chia sẻ <b>toàn màn hình</b>. Trang đề một nửa, app một nửa.</li><li>Làm bài ngay trên trang đề, bấm Check answers, để đáp án hiện vài giây.</li><li>Quay lại app bấm <b>Dừng ghi và nộp bài</b> – cô tự chấm.</li></ol><p class="small muted" style="margin:0 0 8px">Không muốn ghi? Bấm Mở đề chính thức, gõ vào phiếu 10 ô trong app, bố mẹ nhập PIN chấm cùng.</p>`:`<ol class="small" style="margin:0 0 10px;padding-left:20px"><li>Bật <b>Ghi màn hình</b> của iPhone (bấm nút dưới để xem cách).</li><li>Bấm Mở đề chính thức, làm bài, xem đáp án.</li><li>Dừng ghi, về app bấm <b>🎬 Chọn video</b> – cô tự chấm. Hoặc bố mẹ nhập PIN chấm cùng.</li></ol>`}
+      ${canRecord()&&!w.short?`<button class="btn teal" id="recWeb" style="width:100%;justify-content:center;margin-bottom:8px">🔴 Ghi màn hình và làm đề – cô tự chấm</button>`:canRecord()?"":`<button class="btn ghost small" id="recHelp" style="width:100%;justify-content:center;margin-bottom:8px">🔴 Cách bật ghi màn hình trên iPhone</button>`}
+      <a class="btn ghost" id="goWeb" href="${w.url}" target="_blank" rel="noopener" style="width:100%;justify-content:center">Mở đề chính thức</a>
+      <button class="btn ghost small" id="camLost" style="width:100%;justify-content:center;margin-top:8px">😕 Không tìm thấy đề → làm đề thi trong app</button></div>`;
+    main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">Bước 4 · Đề thi</h2><button class="btn ghost small" id="bk">← Trang học</button></div>
+    ${exam}${web}
+    ${doneList.length?`<div class="panel"><h3 style="margin-top:0">↺ Làm lại đề chính thức đã làm</h3>${doneList.map((s,i)=>`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span class="small">${esc(s.details.title)}<br><span class="muted">${fmtDate(s.date)} · ${s.details.correct}/${s.details.total} câu đúng</span></span><button class="btn ghost small" data-redo="${esc(s.details.webId)}">Làm lại</button></div>`).join("")}</div>`:""}
     <p class="small muted">Nhà có sách Cambridge? <button class="btn ghost small" id="useBook">Làm đề trong sách</button></p>`;
-    say("Your test for today is ready. Tap the green button.",`Hôm nay con làm: ${w.label}. Con bấm nút xanh để mở đề nhé.`);
+    say("Your exam is ready. Tap the green button.",`Hôm nay con làm đề thi Nghe Part ${part} ngay trong app. Bấm nút xanh nhé.`);
     $("#bk").onclick=()=>{tab="home";render()};
+    $("#goExam").onclick=()=>startExam();
+    if($("#recHelp"))$("#recHelp").onclick=()=>iphoneRecHelp();
+    if($("#recWeb"))$("#recWeb").onclick=async()=>{const ok=await scrStart();if(!ok){toast("Chưa bật được ghi màn hình. Con bấm lại và chọn cửa sổ trang đề (hoặc toàn màn hình) nhé.");return}answerSheet({online:true,url:w.url,part:w.part,auto:true,webId:w.id,label:w.label,short:w.short,rec:true})};
     $("#useBook").onclick=()=>{S.camBook=true;save();startCambridge("book")};
     $("#camLost").onclick=()=>camFallback(w);
-    $("#goWeb").onclick=()=>{setTimeout(()=>answerSheet({online:true,url:w.url,part:w.part,auto:true,webId:w.id,label:w.label,short:w.short}),300)};
+    $("#goWeb").onclick=()=>{setTimeout(()=>answerSheet({online:true,url:w.url,part:w.part,auto:true,webId:w.id,label:w.label,short:w.short,paper:desk}),300)};
     main.querySelectorAll("[data-redo]").forEach(b=>b.onclick=()=>{const it=webItems().find(x=>x.id===b.dataset.redo);if(!it)return;window.open(it.url,"_blank","noopener");setTimeout(()=>answerSheet({online:true,url:it.url,part:it.part,auto:true,webId:it.id,label:it.label,short:it.short,redo:true}),300)});
     return;
   }
@@ -1599,7 +1681,7 @@ Return ONLY JSON, no markdown: {"title":string,"passage":string (paragraphs sepa
 }
 async function genListening(n=8,section=1,mock=false){
   const sample=await getSample();if(!sample)return null;
-  const kinds={1:"Section 1: an everyday conversation between two speakers (e.g. booking, enquiry) with form completion — include spelling of a name and numbers, plus at least one distractor where a speaker corrects themselves",2:"Section 2: a monologue by a guide or presenter about a local facility or event, with map-free sentence completion and multiple choice",3:"Section 3: a discussion between two students about an assignment, with multiple choice and sentence completion"};
+  const kinds={1:"Section 1: an everyday conversation between two speakers (e.g. booking, enquiry) with form completion — include spelling of a name and numbers, plus at least one distractor where a speaker corrects themselves",2:"Section 2: a monologue by a guide or presenter about a local facility or event, with map-free sentence completion and multiple choice",3:"Section 3: a discussion between two students about an assignment, with multiple choice and sentence completion",4:"Section 4: a lecture by one speaker (use speaker A only) on an academic subject, with note completion (gap questions only)"};
   const prompt=`You are an IELTS Listening test writer. Write an ORIGINAL ${kinds[section]||kinds[1]}, in the style of recent IELTS tests (2023-2026), ${aiLevel(mock)} difficulty, topic related to ${mock?"any everyday or study context":planInfo().focus.en}, about 350 words of dialogue/monologue, natural spoken British English. Then write exactly ${n} questions in the order the answers are heard, types "gap" (NO MORE THAN TWO WORDS AND/OR A NUMBER) or "mcq" (3 options).
 Return ONLY JSON, no markdown: {"title":string,"context":"one sentence in English describing the situation","lines":[{"speaker":"A"|"B","text":string}],"questions":[{"type":"gap"|"mcq","q":string,"options":[3 strings, only for mcq],"answer": for mcq the exact option text; for gap an array of accepted spellings/forms,"explain":"one short sentence in Vietnamese"}]}`;
   try{return validateSet(await sample.json(prompt,{modelTier:"default"}),true)}catch(e){aiFail(e);return null}
@@ -1706,7 +1788,7 @@ function runQuizSet(set,skill,opts){
       if(plays>=maxPlays)return;plays++;playing=true;session.listening=true;pb.textContent="⏹ Dừng";
       if(!("speechSynthesis" in window)){toast("Thiết bị không hỗ trợ đọc tiếng Anh.")}
       const wasMuted=muted;muted=false;
-      for(const l of set.lines){if(!playing)break;await speak(l.text,"en",{rate:.92,pitch:l.speaker==="A"?1.25:.85})}
+      const [va,vb]=duoVoices(),same=va===vb;for(const l of set.lines){if(!playing)break;await speak(l.text,"en",{rate:.92,voice:l.speaker==="A"?va:vb,pitch:same?(l.speaker==="A"?1.25:.85):1})}
       muted=wasMuted;playing=false;session&&(session.listening=false);
       pb.textContent=plays>=maxPlays?"Đã hết lượt nghe":`▶ Nghe lại (còn ${maxPlays-plays} lượt)`;pb.disabled=plays>=maxPlays;
     };
@@ -1722,7 +1804,7 @@ function runQuizSet(set,skill,opts){
     session.countdown=null;session.onTimeUp=null;
     let correct=0;
     const review=set.questions.map((q,i)=>{const ok=isRight(q,answers[i]);if(ok)correct++;const ans=q.type==="gap"?q.answer[0]:q.answer;return `<div class="review ${ok?"ok":"no"}"><b>${i+1}. ${ok?"✓":"✗"}</b> ${esc(q.q)}<br>Con chọn: <b>${esc(answers[i]||"(bỏ trống)")}</b>${ok?"":` · Đáp án: <b>${esc(ans)}</b>`}${q.explain?`<br><span class="muted">${esc(q.explain)}</span>`:""}</div>`}).join("");
-    const res={correct,total:set.questions.length,review};
+    const res={correct,total:set.questions.length,review,answers,ok:set.questions.map((q,i)=>isRight(q,answers[i]))};
     if(mock){opts.onDone(res);return}
     main.innerHTML=`${sessionHead("Xem lại bài")}<div class="panel"><p><b>${correct}/${res.total}</b> câu đúng. Đọc phần giải thích của các câu sai trước khi xem điểm.</p>${review}${skill==="listening"?`<details><summary>Xem lời thoại</summary>${set.lines.map(l=>`<p><b>${esc(l.speaker)}:</b> ${esc(l.text)}</p>`).join("")}</details>`:""}<div class="row" style="margin-top:10px"><button class="btn teal" id="fin" disabled>Đọc giải thích… 8</button></div></div>`;
     bindQuit();scrollTo(0,0);
