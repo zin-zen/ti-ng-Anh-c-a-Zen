@@ -343,6 +343,260 @@ const LISTENING_SET={title:"Booking a study room",context:"A student is phoning 
 {type:"mcq",q:"What will the group use in the room?",options:["A projector","Computers","A printer"],answer:"A projector",explain:"we'll need the projector"}
 ]};
 
+LISTENING_SET.id="L01";LISTENING_SET.sec=1;READING_SET.id="R01";
+/* ===== v2.0: ngân hàng bài Nghe tự soạn theo dạng IELTS (Section 1–4) ===== */
+const LN=(s,t)=>({speaker:s,text:t});
+const LISTENING_BANK=[LISTENING_SET,
+{id:"L02",sec:1,title:"Joining a sports centre",context:"A woman is phoning a sports centre to ask about membership.",lines:[
+LN("B","Riverside Sports Centre, Tom speaking. How can I help?"),LN("A","Hello, I'm thinking of joining the centre. Could you tell me about membership?"),
+LN("B","Sure. We have two options. Standard membership is thirty-two pounds a month, and that includes the gym and the pool."),LN("A","And the other one?"),
+LN("B","Premium is forty-five pounds, which also gives you all the fitness classes."),LN("A","I'll take the standard one, I think. I mainly want to swim."),
+LN("B","Fine. Can I take your name?"),LN("A","Yes, it's Maria Collins. That's C, O, double L, I, N, S."),
+LN("B","Thanks. And your date of birth?"),LN("A","The fourteenth of March, two thousand and five."),
+LN("B","When would you like to start? You'll need an induction session first. They're on Mondays or Saturdays."),LN("A","Monday is difficult because of work, so Saturday, please."),
+LN("B","Great. Please bring a photo and something to show your address, like a bank letter."),LN("A","No problem. Is there parking?"),
+LN("B","Yes, it's free, but only for two hours.")],questions:[
+{type:"gap",q:"Type of membership: ______",answer:["standard"],explain:"I'll take the standard one."},
+{type:"gap",q:"Monthly cost: £______",answer:["32","thirty two","thirtytwo"],explain:"thirty-two pounds a month."},
+{type:"gap",q:"Surname: ______",answer:["collins"],explain:"C-O-double L-I-N-S."},
+{type:"gap",q:"Date of birth: 14 ______ 2005",answer:["march"],explain:"the fourteenth of March."},
+{type:"gap",q:"Induction day: ______",answer:["saturday"],explain:"Monday khó vì đi làm, nên chọn Saturday – bẫy."},
+{type:"mcq",q:"What must she bring?",options:["A photo and proof of address","A passport","A medical form"],answer:"A photo and proof of address",explain:"bring a photo and something to show your address."},
+{type:"gap",q:"Free parking for ______ hours",answer:["2","two"],explain:"only for two hours."}]},
+{id:"L03",sec:1,title:"Renting a flat",context:"A student calls an agency about a flat to rent.",lines:[
+LN("A","Good afternoon, City Homes."),LN("B","Hi, I'm calling about the flat on Park Road that I saw on your website."),
+LN("A","Ah yes, the two-bedroom flat at number seventy-eight."),LN("B","That's right. How much is the rent?"),
+LN("A","It's six hundred and fifty pounds a month. That doesn't include electricity, but water is included."),LN("B","OK. Is it furnished?"),
+LN("A","Partly. There's a sofa and beds, but no desk, I'm afraid."),LN("B","That's fine, I can buy one. Is it near a bus stop?"),
+LN("A","Yes, about five minutes' walk. And the train station is ten minutes away."),LN("B","When can I see it?"),
+LN("A","Tomorrow at four thirty, or Friday morning."),LN("B","Tomorrow, please. I've got lectures on Friday."),
+LN("A","Lovely. And your phone number?"),LN("B","It's oh seven nine three, four four six, two one eight.")],questions:[
+{type:"gap",q:"Address: ______ Park Road",answer:["78","seventy eight"],explain:"number seventy-eight."},
+{type:"gap",q:"Rent per month: £______",answer:["650","six hundred and fifty","six hundred fifty"],explain:"six hundred and fifty pounds."},
+{type:"mcq",q:"Which bill is included in the rent?",options:["Water","Electricity","Internet"],answer:"Water",explain:"water is included."},
+{type:"gap",q:"Missing furniture: a ______",answer:["desk"],explain:"no desk."},
+{type:"gap",q:"Walk to bus stop: ______ minutes",answer:["5","five"],explain:"five minutes' walk."},
+{type:"gap",q:"Viewing time: tomorrow at ______",answer:["4:30","4.30","430","four thirty","4:30pm","4.30pm"],explain:"four thirty."},
+{type:"gap",q:"Phone: 07934 ______",answer:["446218","446 218"],explain:"four four six, two one eight."}]},
+{id:"L04",sec:1,title:"Booking a city tour",context:"A tourist phones to book a bus tour.",lines:[
+LN("B","Good morning, Harbour City Tours."),LN("A","Hello, I'd like to book the afternoon bus tour for Sunday."),
+LN("B","Certainly. How many people?"),LN("A","Two adults and one child. My son is eight."),
+LN("B","Adults are twenty-four dollars and children under ten pay half price."),LN("A","Great. Where does the tour start?"),
+LN("B","From the museum, outside the main entrance. Please arrive fifteen minutes early."),LN("A","What time does it leave?"),
+LN("B","At one forty-five, and it lasts about three hours."),LN("A","Does it include lunch?"),
+LN("B","No, but we stop at the old market, where you can buy snacks."),LN("A","And what's the name for the booking?"),
+LN("B","Could you spell your surname?"),LN("A","Yes, it's Nguyen. N, G, U, Y, E, N.")],questions:[
+{type:"gap",q:"Number of people: ______",answer:["3","three"],explain:"Two adults and one child."},
+{type:"gap",q:"Child's ticket price: $______",answer:["12","twelve"],explain:"Trẻ dưới 10 tuổi trả nửa giá: 24 : 2 = 12."},
+{type:"gap",q:"Meeting point: outside the ______",answer:["museum","museum main entrance","main entrance"],explain:"From the museum, outside the main entrance."},
+{type:"gap",q:"Departure time: ______",answer:["1:45","1.45","145","one forty five","1:45pm"],explain:"one forty-five."},
+{type:"gap",q:"Length of tour: ______ hours",answer:["3","three"],explain:"about three hours."},
+{type:"gap",q:"Stop for snacks at the old ______",answer:["market"],explain:"the old market."}]},
+{id:"L05",sec:2,title:"Welcome to the science museum",context:"A guide gives information to a group of visitors.",lines:[
+LN("A","Good morning, everyone, and welcome to the National Science Museum. I'm Sarah, and I'll be giving you some information before you start."),
+LN("A","The museum has four floors. On the ground floor you'll find the shop and the café. The café closes at four, which is an hour before the museum."),
+LN("A","The space gallery is on the first floor, and it's the most popular area, so I suggest you go there first, before it gets crowded."),
+LN("A","Unfortunately, the lift to the second floor is being repaired today, so please use the stairs next to the information desk."),
+LN("A","On the top floor there's a new exhibition about the human body. Photos are not allowed there, but you can take pictures everywhere else."),
+LN("A","If you have large bags, please leave them in the lockers. They cost one pound, and you get the coin back when you return the key."),
+LN("A","Finally, at two o'clock there's a free talk about robots in the main hall. Seats are limited, so collect a ticket from the information desk.")],questions:[
+{type:"gap",q:"The café closes at ______",answer:["4","four","4pm","4:00","4 oclock","four oclock"],explain:"The café closes at four."},
+{type:"mcq",q:"Why should visitors go to the space gallery first?",options:["It gets crowded later","It closes early","It is near the café"],answer:"It gets crowded later",explain:"before it gets crowded."},
+{type:"mcq",q:"What is the problem today?",options:["The lift is not working","The stairs are closed","The shop is closed"],answer:"The lift is not working",explain:"the lift is being repaired."},
+{type:"gap",q:"Photos are not allowed in the exhibition about the human ______",answer:["body"],explain:"human body."},
+{type:"gap",q:"Lockers cost £______ (returned)",answer:["1","one"],explain:"one pound."},
+{type:"gap",q:"Free talk topic: ______",answer:["robots","robot"],explain:"a free talk about robots."},
+{type:"gap",q:"Get a talk ticket from the ______ desk",answer:["information"],explain:"from the information desk."}]},
+{id:"L06",sec:2,title:"Volunteering at a nature park",context:"A park manager speaks to new volunteers.",lines:[
+LN("B","Hello and thank you for volunteering at Greenwood Nature Park. Let me explain how things work."),
+LN("B","Most volunteers work on Saturdays, but we really need more help on weekdays, especially Wednesdays, when school groups visit."),
+LN("B","Your main job will be helping visitors and keeping the paths clear. Please don't feed the animals, even if visitors ask you to."),
+LN("B","We provide gloves and a jacket, but you'll need to bring your own boots, because the ground is often wet."),
+LN("B","Lunch isn't provided, but there's a kitchen where you can make tea and heat food."),
+LN("B","After three months, volunteers can join a training course in first aid. It's free and lasts two days."),
+LN("B","If you can't come on your usual day, please send a text message to the office rather than an email, because we don't check emails at weekends.")],questions:[
+{type:"mcq",q:"On which day does the park need more volunteers?",options:["Wednesday","Saturday","Sunday"],answer:"Wednesday",explain:"especially Wednesdays, when school groups visit."},
+{type:"mcq",q:"Volunteers must NOT",options:["feed the animals","talk to visitors","clear the paths"],answer:"feed the animals",explain:"don't feed the animals."},
+{type:"gap",q:"Volunteers bring their own ______",answer:["boots"],explain:"bring your own boots."},
+{type:"gap",q:"The kitchen can be used to make tea and heat ______",answer:["food"],explain:"heat food."},
+{type:"gap",q:"First aid course after ______ months",answer:["3","three"],explain:"After three months."},
+{type:"mcq",q:"How should volunteers report an absence?",options:["By text message","By email","By phone call"],answer:"By text message",explain:"send a text message… rather than an email."}]},
+{id:"L07",sec:3,title:"Planning a group presentation",context:"Two students, Anna and Ben, discuss their presentation on recycling.",lines:[
+LN("A","Ben, we need to decide how to divide the presentation on recycling."),LN("B","Right. I think I should do the introduction, because I've already read most of the background articles."),
+LN("A","Good. Then I'll present the survey results. We asked a hundred and twenty students, didn't we?"),LN("B","Actually, it was a hundred and forty. Twenty more replied last week."),
+LN("A","Oh, I forgot. And the most surprising result was that most students don't recycle plastic bottles."),LN("B","Yes, mainly because there aren't enough bins on campus, not because they don't care."),
+LN("A","We should suggest putting bins in the library. That's where people drink the most."),LN("B","I agree. For the slides, should we use lots of charts?"),
+LN("A","Our tutor said we used too much text last time, so more charts and fewer words."),LN("B","OK. And we have to finish in fifteen minutes, including questions."),
+LN("A","Let's practise on Thursday evening in the study room.")],questions:[
+{type:"mcq",q:"Why will Ben do the introduction?",options:["He has read the background articles","He is a confident speaker","Anna asked him to"],answer:"He has read the background articles",explain:"I've already read most of the background articles."},
+{type:"gap",q:"Number of students surveyed: ______",answer:["140","a hundred and forty","one hundred and forty","hundred and forty"],explain:"120 là bẫy, đã sửa thành 140."},
+{type:"mcq",q:"Why don't most students recycle plastic bottles?",options:["There are not enough bins","They don't care","They don't know how"],answer:"There are not enough bins",explain:"not enough bins on campus, not because they don't care."},
+{type:"gap",q:"They will suggest new bins in the ______",answer:["library"],explain:"bins in the library."},
+{type:"mcq",q:"What did the tutor criticise last time?",options:["Too much text","Too many charts","Speaking too fast"],answer:"Too much text",explain:"we used too much text last time."},
+{type:"gap",q:"Total time limit: ______ minutes",answer:["15","fifteen"],explain:"fifteen minutes, including questions."},
+{type:"gap",q:"Practice day: ______",answer:["thursday"],explain:"Thursday evening."}]},
+{id:"L08",sec:3,title:"Choosing a research topic",context:"A student, Lucy, talks to her tutor, Dr Evans, about her research project.",lines:[
+LN("A","Dr Evans, I'm still not sure about my research topic. I was thinking about social media and sleep."),LN("B","It's interesting, Lucy, but a lot of research has already been done on that. Could you make it more specific?"),
+LN("A","Maybe I could focus only on teenagers who study for exams?"),LN("B","That's much better. How will you collect your data?"),
+LN("A","I wanted to use interviews, but they take a long time, so I'll use an online questionnaire."),LN("B","Sensible. Try to get at least fifty responses. And don't forget to ask for permission from the school."),
+LN("A","Of course. When should I send you the first draft?"),LN("B","The deadline is the end of May, but send me a plan by the twentieth of April."),
+LN("A","Should the plan include my reading list?"),LN("B","Yes, but only the most important sources, around ten."),
+LN("A","Thank you. I feel much more confident now.")],questions:[
+{type:"mcq",q:"What is the tutor's opinion of the first topic?",options:["It is too general","It is too difficult","It is boring"],answer:"It is too general",explain:"make it more specific."},
+{type:"gap",q:"New focus: teenagers who study for ______",answer:["exams","exam"],explain:"teenagers who study for exams."},
+{type:"mcq",q:"Why won't Lucy use interviews?",options:["They take too long","Students refuse them","Her tutor disagrees"],answer:"They take too long",explain:"they take a long time."},
+{type:"gap",q:"Minimum responses: ______",answer:["50","fifty"],explain:"at least fifty responses."},
+{type:"gap",q:"Plan deadline: 20 ______",answer:["april"],explain:"the twentieth of April (cuối tháng 5 là hạn bản nháp – bẫy)."},
+{type:"gap",q:"Number of sources in the reading list: about ______",answer:["10","ten"],explain:"around ten."}]},
+{id:"L09",sec:4,title:"The history of the bicycle",context:"Part of a lecture about the development of the bicycle.",lines:[
+LN("B","Today I'd like to look at the history of the bicycle, which changed transport for ordinary people."),
+LN("B","The first machine, built in Germany in eighteen seventeen, had no pedals at all. Riders pushed it along with their feet."),
+LN("B","Pedals were added in the eighteen sixties, but the ride was so uncomfortable that people called these bikes 'boneshakers'."),
+LN("B","Next came the penny-farthing, with a huge front wheel. It was fast, but dangerous, because riders often fell forward."),
+LN("B","The real breakthrough was the so-called safety bicycle in the eighteen eighties, with two wheels of the same size and a chain."),
+LN("B","Soon after, air-filled rubber tyres made cycling much smoother, and sales increased dramatically."),
+LN("B","Interestingly, the bicycle also gave women greater freedom, as they could travel independently for the first time."),
+LN("B","Today, many cities are building cycle lanes to reduce pollution and traffic.")],questions:[
+{type:"gap",q:"The first machine was built in Germany in ______",answer:["1817","eighteen seventeen"],explain:"eighteen seventeen = 1817."},
+{type:"gap",q:"The first machine had no ______",answer:["pedals","pedal"],explain:"had no pedals at all."},
+{type:"gap",q:"Bikes of the 1860s were called '______'",answer:["boneshakers","boneshaker"],explain:"called… boneshakers."},
+{type:"mcq",q:"What was the problem with the penny-farthing?",options:["It was dangerous","It was slow","It was expensive"],answer:"It was dangerous",explain:"fast, but dangerous."},
+{type:"gap",q:"The safety bicycle used wheels of the same size and a ______",answer:["chain"],explain:"and a chain."},
+{type:"gap",q:"Air-filled rubber ______ made cycling smoother",answer:["tyres","tires","tyre","tire"],explain:"air-filled rubber tyres."},
+{type:"mcq",q:"Which social effect does the lecturer mention?",options:["More freedom for women","Cheaper food","Fewer cars"],answer:"More freedom for women",explain:"gave women greater freedom."}]},
+{id:"L10",sec:4,title:"Bees and food production",context:"Part of a lecture about bees.",lines:[
+LN("A","In this lecture I'll explain why bees matter so much for the food we eat."),
+LN("A","About one third of the food crops we eat depend on pollination by insects, and bees are the most important of these insects."),
+LN("A","Without bees, fruits such as apples and almonds would become far more expensive."),
+LN("A","However, bee numbers have fallen sharply in recent decades. Scientists point to three main causes: chemicals used on farms, disease, and the loss of wild flowers."),
+LN("A","The loss of flowers is particularly serious, because bees need a variety of plants throughout the year."),
+LN("A","Some farmers now leave strips of land with wild flowers next to their fields, and early results show a clear increase in bee numbers."),
+LN("A","Ordinary people can help too, simply by growing flowers in their gardens or even on balconies.")],questions:[
+{type:"gap",q:"About one ______ of food crops depend on insect pollination",answer:["third"],explain:"About one third."},
+{type:"mcq",q:"Which fruits are given as examples?",options:["Apples and almonds","Bananas and grapes","Oranges and lemons"],answer:"Apples and almonds",explain:"apples and almonds."},
+{type:"gap",q:"Causes of decline: farm chemicals, disease and loss of wild ______",answer:["flowers","flower"],explain:"the loss of wild flowers."},
+{type:"mcq",q:"Why is the loss of flowers serious?",options:["Bees need different plants all year","Flowers produce chemicals","Farmers need flowers to sell"],answer:"Bees need different plants all year",explain:"a variety of plants throughout the year."},
+{type:"gap",q:"Farmers leave ______ of land with wild flowers",answer:["strips","strip"],explain:"strips of land."},
+{type:"gap",q:"People can grow flowers in gardens or on ______",answer:["balconies","balcony"],explain:"even on balconies."}]},
+{id:"L11",sec:1,title:"Lost property at the train station",context:"A man reports a lost bag at a train station.",lines:[
+LN("A","Lost property office, can I help you?"),LN("B","Yes, I left my bag on the train this morning."),
+LN("A","I'm sorry to hear that. Which train were you on?"),LN("B","The eight fifteen from Oxford. I got off here at nine twenty."),
+LN("A","Can you describe the bag?"),LN("B","It's a black backpack, quite small, with a red stripe on the front."),
+LN("A","What was inside?"),LN("B","A laptop, a blue umbrella and some books. Oh, and my glasses."),
+LN("A","Was there anything with your name on it?"),LN("B","Yes, there's a label inside with my email address."),
+LN("A","OK, I'll fill in a form. Your name?"),LN("B","Daniel Price. P, R, I, C, E."),
+LN("A","If we find it, you can collect it here. We're open until six, but closed on Sundays.")],questions:[
+{type:"gap",q:"Train departed Oxford at ______",answer:["8:15","8.15","815","eight fifteen"],explain:"the eight fifteen from Oxford."},
+{type:"gap",q:"Colour of the bag: ______",answer:["black"],explain:"a black backpack (sọc màu đỏ – bẫy)."},
+{type:"gap",q:"Detail: a red ______ on the front",answer:["stripe"],explain:"a red stripe."},
+{type:"mcq",q:"Which item was NOT in the bag?",options:["A wallet","A laptop","Glasses"],answer:"A wallet",explain:"laptop, umbrella, books, glasses."},
+{type:"gap",q:"The label shows his ______ address",answer:["email","e mail"],explain:"my email address."},
+{type:"gap",q:"Surname: ______",answer:["price"],explain:"P-R-I-C-E."},
+{type:"gap",q:"The office is closed on ______",answer:["sunday","sundays"],explain:"closed on Sundays."}]},
+{id:"L12",sec:2,title:"Changes at the local library",context:"A radio announcement about the town library.",lines:[
+LN("B","And now some local news. The town library will reopen next Monday after six months of renovation."),
+LN("B","The biggest change is the new children's area, which has moved from the basement to the ground floor, so it's much brighter."),
+LN("B","There are now twenty computers instead of eight, and they can be booked online for up to two hours a day."),
+LN("B","Opening hours are longer as well. The library will now stay open until eight in the evening on weekdays."),
+LN("B","A new café has opened on the first floor, but food is still not allowed in the reading rooms."),
+LN("B","Members can borrow up to twelve books at a time, two more than before."),
+LN("B","To celebrate the reopening, there'll be a story-telling event for children on Saturday at ten thirty.")],questions:[
+{type:"gap",q:"Length of renovation: ______ months",answer:["6","six"],explain:"six months of renovation."},
+{type:"mcq",q:"Where is the children's area now?",options:["On the ground floor","In the basement","On the first floor"],answer:"On the ground floor",explain:"moved from the basement to the ground floor."},
+{type:"gap",q:"Number of computers now: ______",answer:["20","twenty"],explain:"twenty instead of eight."},
+{type:"gap",q:"Weekday closing time: ______",answer:["8","8pm","eight","8 pm","20:00","8:00"],explain:"until eight in the evening."},
+{type:"gap",q:"Books per member: ______",answer:["12","twelve"],explain:"up to twelve books."},
+{type:"gap",q:"Story-telling event time: Saturday at ______",answer:["10:30","10.30","1030","ten thirty"],explain:"ten thirty."}]},
+{id:"L13",sec:3,title:"Feedback on an essay",context:"A student, Minh, talks to his tutor about his essay.",lines:[
+LN("A","Minh, thanks for coming. I've read your essay on climate and farming."),LN("B","Thank you. Was it all right?"),
+LN("A","Your ideas are good, and your examples from Vietnam are very relevant. The main problem is organisation."),LN("B","Do you mean the paragraphs?"),
+LN("A","Yes. Each paragraph should start with one clear main idea. Some of yours have two or three."),LN("B","I see. What about my conclusion?"),
+LN("A","It's too short. You introduce a new idea there, which you shouldn't do. Just summarise your main points."),LN("B","OK. And the references?"),
+LN("A","They're fine, but use more recent sources, ideally from the last five years."),LN("B","When should I hand in the new version?"),
+LN("A","By next Friday. And try reading it aloud before you submit it. You'll notice mistakes more easily.")],questions:[
+{type:"mcq",q:"What does the tutor praise?",options:["His examples","His grammar","His conclusion"],answer:"His examples",explain:"examples from Vietnam are very relevant."},
+{type:"gap",q:"The main problem is ______",answer:["organisation","organization"],explain:"The main problem is organisation."},
+{type:"mcq",q:"What is wrong with the conclusion?",options:["It introduces a new idea","It is too long","It repeats the title"],answer:"It introduces a new idea",explain:"You introduce a new idea there."},
+{type:"gap",q:"Use sources from the last ______ years",answer:["5","five"],explain:"from the last five years."},
+{type:"gap",q:"New deadline: next ______",answer:["friday"],explain:"By next Friday."},
+{type:"mcq",q:"What does the tutor suggest before submitting?",options:["Reading it aloud","Asking a friend","Using a dictionary"],answer:"Reading it aloud",explain:"try reading it aloud."}]}
+];
+
+/* ===== v2.0: thêm từ vựng theo chủ đề IELTS (ưu tiên từ hay gặp trong bài Nghe) ===== */
+[
+["accommodation","n","chỗ ở","The university helps students find accommodation."],["deposit","n","tiền đặt cọc","You pay a deposit of two hundred pounds."],
+["landlord","n","chủ nhà cho thuê","The landlord will fix the heating."],["tenant","n","người thuê nhà","Tenants must pay rent on time."],
+["receipt","n","hoá đơn, biên lai","Keep the receipt in case you return it."],["refund","n","tiền hoàn lại","She asked for a full refund."],
+["discount","n","giảm giá","Students get a ten percent discount."],["fee","n","phí","The entrance fee is five pounds."],
+["schedule","n","lịch trình","The train schedule changes in winter."],["appointment","n","cuộc hẹn","I have a dentist appointment at nine."],
+["reception","n","quầy lễ tân","Please leave your key at reception."],["facilities","n","cơ sở vật chất","The hotel has excellent facilities."],
+["register","v","đăng ký","You must register before the course starts."],["enrol","v","ghi danh (khoá học)","She enrolled in an evening class."],
+["available","adj","có sẵn, còn trống","Is this room available on Friday?"],["fully booked","adj","kín chỗ","The restaurant is fully booked tonight."],
+["cancel","v","huỷ","They cancelled the trip because of rain."],["postpone","v","hoãn lại","The match was postponed until Sunday."],
+["brochure","n","tờ quảng cáo","The brochure lists all the tours."],["itinerary","n","lịch trình chuyến đi","Our itinerary includes three cities."],
+["destination","n","điểm đến","Da Nang is a popular destination."],["departure","n","sự khởi hành","Departure is at seven thirty."],
+["luggage","n","hành lý","Don't leave your luggage unattended."],["passport","n","hộ chiếu","Check that your passport is valid."],
+["insurance","n","bảo hiểm","Travel insurance is strongly recommended."],["vehicle","n","phương tiện, xe","Park your vehicle in the car park."],
+["pedestrian","n","người đi bộ","This street is for pedestrians only."],["congestion","n","sự tắc nghẽn","Congestion is worst at rush hour."],
+["commute","v","đi lại (đi làm/học)","He commutes to Hanoi every day."],["route","n","tuyến đường","Which route is the quickest?"],
+["junction","n","ngã ba, ngã tư","Turn left at the next junction."],["opposite","prep","đối diện","The bank is opposite the post office."],
+["entrance","n","lối vào","Meet me at the main entrance."],["corridor","n","hành lang","The office is at the end of the corridor."],
+["exhibition","n","triển lãm","The exhibition opens next week."],["admission","n","vé vào cửa, sự cho vào","Admission is free for children."],
+["membership","n","tư cách hội viên","Annual membership costs sixty pounds."],["equipment","n","thiết bị","All equipment is provided."],
+["volunteer","n","tình nguyện viên","We need volunteers for the festival."],["donation","n","sự quyên góp","Donations help the animal shelter."],
+["assignment","n","bài tập lớn","The assignment is due on Monday."],["deadline","n","hạn chót","Don't miss the deadline."],
+["lecture","n","bài giảng","The lecture starts at ten."],["tutor","n","giảng viên hướng dẫn","My tutor gave me useful feedback."],
+["seminar","n","buổi thảo luận chuyên đề","Everyone must speak in the seminar."],["presentation","n","bài thuyết trình","Our presentation lasts ten minutes."],
+["questionnaire","n","bảng câu hỏi khảo sát","Please complete the questionnaire."],["survey","n","cuộc khảo sát","The survey had 200 participants."],
+["data","n","dữ liệu","We collected data for three months."],["analyse","v","phân tích","Analyse the results carefully."],
+["source","n","nguồn (tài liệu)","Use reliable sources in your essay."],["draft","n","bản nháp","Send me your first draft."],
+["feedback","n","nhận xét, phản hồi","Feedback helps us improve."],["handout","n","tài liệu phát tay","The handout has all the key points."],
+["environment","n","môi trường","We must protect the environment."],["pollution","n","sự ô nhiễm","Air pollution is a serious problem."],
+["recycle","v","tái chế","We recycle paper and plastic."],["waste","n","rác thải, sự lãng phí","Food waste is rising."],
+["species","n","loài","Many species are in danger."],["habitat","n","môi trường sống","Forests are the habitat of many animals."],
+["climate","n","khí hậu","The climate is getting warmer."],["drought","n","hạn hán","The drought destroyed the crops."],
+["renewable","adj","tái tạo được","Solar power is a renewable energy source."],["conservation","n","sự bảo tồn","Wildlife conservation needs funding."],
+["nutrition","n","dinh dưỡng","Good nutrition is important for children."],["symptom","n","triệu chứng","A cough is a common symptom of flu."],
+["prescription","n","đơn thuốc","You need a prescription for this medicine."],["injury","n","chấn thương","He missed the match because of an injury."],
+["diet","n","chế độ ăn","A balanced diet includes vegetables."],["exercise","n","sự tập luyện","Regular exercise improves sleep."],
+["technology","n","công nghệ","Technology changes how we learn."],["device","n","thiết bị (điện tử)","Turn off all devices during the exam."],
+["innovation","n","sự đổi mới","Innovation drives economic growth."],["research","n","nghiên cứu","Research shows that sleep helps memory."],
+["experiment","n","thí nghiệm","The experiment took six weeks."],["evidence","n","bằng chứng","There is little evidence for this claim."],
+["benefit","n","lợi ích","The benefits outweigh the costs."],["drawback","n","nhược điểm","The main drawback is the price."],
+["increase","v","tăng","Prices increased by ten percent."],["decline","v","giảm","Sales declined sharply in 2020."],
+["fluctuate","v","dao động","Temperatures fluctuate during the day."],["steadily","adv","đều đặn, ổn định","The population rose steadily."],
+["significant","adj","đáng kể","There was a significant change."],["approximately","adv","khoảng chừng","Approximately half of the students agreed."],
+["proportion","n","tỷ lệ","A large proportion of people live in cities."],["majority","n","phần lớn","The majority voted for the plan."],
+["employment","n","việc làm","Employment rates rose last year."],["salary","n","lương","She earns a good salary."],
+["colleague","n","đồng nghiệp","My colleagues are very helpful."],["career","n","sự nghiệp","He wants a career in medicine."],
+["qualification","n","bằng cấp","You need a teaching qualification."],["experience","n","kinh nghiệm","Do you have any work experience?"],
+["community","n","cộng đồng","The library serves the local community."],["population","n","dân số","The city's population is growing."],
+["urban","adj","thuộc thành thị","Urban areas are often crowded."],["rural","adj","thuộc nông thôn","Rural life is quieter."],
+["tradition","n","truyền thống","Tet is an important tradition."],["generation","n","thế hệ","The older generation prefers TV."],
+["advertise","v","quảng cáo","They advertise on social media."],["consumer","n","người tiêu dùng","Consumers want cheaper products."],
+["afford","v","đủ khả năng chi trả","Many families cannot afford a car."],["budget","n","ngân sách","We have a small budget for the trip."]
+].forEach(([w,pos,vi,ex])=>{if(!WORDS.some(x=>x.w===w))WORDS.push({w,pos,vi,ex})});
+
+/* ===== v2.0: thêm bài Đọc ===== */
+const READING_BANK=[READING_SET,
+{id:"R02",title:"The return of the night train",passage:"For several decades, overnight trains in Europe seemed to be disappearing. Cheap flights made it possible to travel between capital cities in under two hours, and many railway companies closed their sleeper services because they were losing money.\n\nIn recent years, however, night trains have returned. One reason is environmental concern: a journey by train produces far less carbon dioxide per passenger than the same trip by plane. Many travellers, especially young people, now say they are willing to spend more time travelling in order to reduce their impact on the climate.\n\nNight trains also offer a practical advantage. Passengers save the cost of a hotel and arrive in the city centre early in the morning, rather than at an airport far from town. Business travellers can work in their compartment, and families find it easier to travel with children.\n\nNevertheless, operators face real challenges. Sleeper carriages are expensive to build, and each carriage carries fewer passengers than a normal train. Tickets are therefore often more expensive than flights booked well in advance. Some experts argue that governments should support night trains with lower track fees, as they do for other forms of public transport.",questions:[
+{type:"tfng",q:"Many sleeper services closed because they were unprofitable.",answer:"TRUE",explain:"closed… because they were losing money."},
+{type:"tfng",q:"Night trains produce more carbon dioxide per passenger than planes.",answer:"FALSE",explain:"far less carbon dioxide."},
+{type:"tfng",q:"Older travellers are more likely than young people to choose night trains.",answer:"NOT GIVEN",explain:"Chỉ nói người trẻ, không so sánh với người lớn tuổi."},
+{type:"mcq",q:"What practical advantage of night trains is mentioned?",options:["Passengers avoid paying for a hotel","Tickets are always cheap","Trains are faster than planes","Food is included"],answer:"Passengers avoid paying for a hotel",explain:"save the cost of a hotel."},
+{type:"gap",q:"Night trains arrive in the city ______ early in the morning.",answer:["centre","center","city centre"],explain:"arrive in the city centre."},
+{type:"mcq",q:"Why are sleeper tickets often expensive?",options:["Carriages are costly and carry fewer people","Staff salaries are high","Demand is very low","Fuel prices are rising"],answer:"Carriages are costly and carry fewer people",explain:"expensive to build… fewer passengers."},
+{type:"gap",q:"Some experts want governments to reduce track ______.",answer:["fees"],explain:"lower track fees."}]},
+{id:"R03",title:"Why we forget",passage:"Most people worry when they forget a name or a phone number, but forgetting is a normal and even useful part of how memory works. Psychologists have shown that if information is not used, it fades quickly. In a famous series of experiments in the nineteenth century, Hermann Ebbinghaus found that people forgot more than half of a list of nonsense words within an hour.\n\nHowever, Ebbinghaus also discovered that reviewing information at increasing intervals slows down forgetting dramatically. This idea, now called spaced repetition, is the basis of many modern language-learning apps. A learner might review a new word after one day, then after three days, then after a week.\n\nSleep also plays an important role. During deep sleep, the brain appears to replay and strengthen the memories formed during the day. Students who stay up all night before an exam often remember less than those who study for shorter periods and sleep well.\n\nFinally, researchers suggest that forgetting helps us focus. By losing details that are no longer relevant, the brain makes it easier to find the information we actually need.",questions:[
+{type:"tfng",q:"Forgetting can be useful.",answer:"TRUE",explain:"a normal and even useful part."},
+{type:"tfng",q:"Ebbinghaus used real words in his experiments.",answer:"FALSE",explain:"nonsense words."},
+{type:"gap",q:"Reviewing at increasing intervals is called spaced ______.",answer:["repetition"],explain:"spaced repetition."},
+{type:"mcq",q:"According to the passage, a learner might review a new word",options:["after one day, three days and a week","every hour","only once a week","before every meal"],answer:"after one day, three days and a week",explain:"after one day, then after three days, then after a week."},
+{type:"tfng",q:"Deep sleep helps strengthen memories.",answer:"TRUE",explain:"replay and strengthen the memories."},
+{type:"tfng",q:"Most language apps were designed by psychologists.",answer:"NOT GIVEN",explain:"Không nhắc ai thiết kế app."},
+{type:"gap",q:"Forgetting irrelevant details helps the brain to ______.",answer:["focus"],explain:"forgetting helps us focus."}]}
+];
+
 const WRITING_TASKS=[
 {task:2,min:250,mins:40,prompt:"Some people believe that university students should pay the full cost of their studies, while others think the government should pay. Discuss both views and give your own opinion."},
 {task:2,min:250,mins:40,prompt:"In many countries, young people now spend more time communicating online than face to face. Do the advantages of this development outweigh the disadvantages?"},
@@ -454,7 +708,7 @@ const SKILL_NAME={vocab:"Từ vựng",reading:"Đọc",listening:"Nghe",writing:
 
 /* ============ State & storage ============ */
 const LS_KEY="ielts-comai-v1";
-const DEFAULT={settings:{pin:"1234",pinChanged:false,email:"",childName:"Ngân Hà",stickerValue:30000,dayOffCost:5,dailyMin:30,stickerCap:3,centerScore:4.5,targetDate:"2028-05-31",grade:"11",planStart:null},
+const DEFAULT={settings:{pin:"1234",pinChanged:false,email:"",childName:"Ngân Hà",stickerValue:30000,dayOffCost:5,dailyMin:30,stickerCap:3,centerScore:5,currentBand:5,targetDate:"2028-05-31",grade:"11",planStart:null},
   sessions:[],stickers:{earned:0,spent:0},redemptions:[],wrong:{},learned:{},customWords:[],reports:[],dayOffs:[],firstDay:null,flags:{},level:null,levelHistory:[],bookDone:{}};
 let S=clone(DEFAULT), db=null, docRef=null, saveT=null;
 function clone(x){return JSON.parse(JSON.stringify(x))}
@@ -464,16 +718,19 @@ function save(){persistLocal();clearTimeout(saveT);saveT=setTimeout(async()=>{if
 async function initStore(){
   try{const raw=localStorage.getItem(LS_KEY);if(raw)S=mergeDefaults(JSON.parse(raw))}catch(e){}
   if(!S.firstDay){S.firstDay=dayKey();persistLocal()}
+  applyBand5();
   render();greet();
   if(!window.claude||!claude.use)return;
   try{db=await claude.use("db")}catch(e){db=null}
   if(!db)return;
   docRef=db.doc("app/state");
   try{const snap=await docRef.get();
-    if(snap.exists){S=mergeDefaults(snap.data());persistLocal();if(welcomeOpen)showWelcome(false);else if(!session)render()}else{save()}
+    if(snap.exists){S=mergeDefaults(snap.data());applyBand5();persistLocal();if(welcomeOpen)showWelcome(false);else if(!session)render()}else{save()}
   }catch(e){}
   try{docRef.onSnapshot(snap=>{if(!snap.exists||session)return;const d=snap.data();if(JSON.stringify(d)===JSON.stringify(S))return;S=mergeDefaults(d);persistLocal();if(!busyTyping())render()},()=>{})}catch(e){}
 }
+function applyBand5(){S.flags=S.flags||{};if(S.flags.band5)return;S.flags.band5=1;
+  if((S.settings.centerScore||0)<5)S.settings.centerScore=5;if((S.settings.currentBand||0)<5)S.settings.currentBand=5;try{save()}catch(e){persistLocal()}}
 function busyTyping(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 
 /* ============ Utils ============ */
@@ -702,6 +959,7 @@ function stickerTarget(){return planInfo().phase.target}
 function stickerRules(type,rec,details){
   const why=[];let n=0;const target=stickerTarget();
   if(type==="placement")return {n:0,why};
+  if(details&&details.kind==="cam")return {n:0,why:["Điểm đề sách Cambridge / đề online do con tự chấm nên được ghi lại để theo dõi, không tính sticker."]};
   if((rec.rushed||0)>=3)return {n:0,why:["Bài này làm vội từ 3 lần trở lên nên chưa tính sticker. Lần sau đọc chậm lại nhé!"]};
   if(type==="vocab"){if(rec.score!=null&&rec.score>=8){n++;why.push("Từ vựng đạt từ 8/10")}}
   else if(type==="mock"){if(details&&details.bands){const k=Object.values(details.bands).filter(b=>b>=target).length;if(k){n+=k;why.push(`${k} kỹ năng thi thử đạt từ band ${target}`)}}}
@@ -811,7 +1069,11 @@ function bindSurvey(rec){
     if(typeof postLog==="function")postLog(r);
     surveyReply(sv,r);
     $("#survey").innerHTML=`<h3>Cảm ơn con đã chia sẻ</h3><p class="small">${esc(viText(surveyReplyVi))}</p>`;
-    btn.textContent="Về trang học";btn.onclick=()=>{tab="home";render();scrollTo(0,0)};
+    const nf=nextFocus();
+    if(nf){btn.textContent=`▶ Tiếp theo – bước ${nf.n}: ${nf.t}`;btn.onclick=()=>{scrollTo(0,0);runFocus(nf.id)};
+      btn.insertAdjacentHTML("afterend",`<button class="btn ghost" id="toHome">Về trang học</button>`);$("#toHome").onclick=()=>{justFinished=true;tab="home";render();scrollTo(0,0)};
+      setTimeout(()=>say(`Next: step ${nf.n}.`,`Bước tiếp theo của con: ${nf.t}.`),3500)}
+    else{btn.textContent="Về trang học";btn.onclick=()=>{tab="home";render();scrollTo(0,0)};setTimeout(()=>say("All four focus tasks are done today. Well done!","Con đã xong cả 4 nhiệm vụ trọng tâm hôm nay. Giỏi lắm!"),3500)}
   };
 }
 let surveyReplyVi="";
@@ -890,11 +1152,135 @@ function renderHome(){
   ${done&&S.settings.email?`<div class="banner ok">Con đã hoàn thành. <a class="btn small teal" style="margin-left:6px" href="${mailtoDaily()}" target="_blank" rel="noopener">Gửi báo cáo cho bố mẹ</a></div>`:""}
   ${!S.level?`<div class="banner">Con chưa làm test đầu vào trong app. <button class="btn small teal" id="placeBtn" style="margin-left:6px">Làm test (~30 phút)</button></div>`:""}
   <p class="small muted">Lộ trình tuần ${P.week}: <b>${esc(P.focus.focus)}</b> · chủ đề ${esc(P.focus.topic)}</p>
-  <h3 style="margin-top:6px">Chọn bài ôn</h3>
-  <div class="modlist">${mods.map(([id,ic,t,s])=>{const ls=lastScore(id);return `<button class="mod" data-mod="${id}"><span class="ic" style="background:${SKILL_COLOR[id]};color:#fff">${icon(id)}</span><span><span class="t">${t}</span><br><span class="s">${s}</span></span><span class="sc">${lastBand(id)!=null?"band "+lastBand(id):ls!=null?ls+"/10":""}</span></button>`}).join("")}</div>
+  ${(()=>{const nf=nextFocus();return nf?`<div class="panel" style="border:2px solid var(--teal)"><p class="small muted" style="margin:0">Việc con cần làm tiếp – bước ${nf.n}/${nf.total}</p><h3 style="margin:4px 0 6px">${esc(nf.t)}</h3><ol class="small" style="margin:0 0 10px;padding-left:20px">${TASK_GUIDE[nf.id].map(s=>`<li>${esc(s)}</li>`).join("")}</ol><button class="btn teal" id="goNext">▶ Bắt đầu bước ${nf.n}</button></div>`:`<div class="banner ok">Con đã xong cả 4 nhiệm vụ trọng tâm hôm nay! Muốn học thêm, chọn bất kỳ bài nào bên dưới.</div>`})()}
+  <h3 style="margin-top:6px">Nhiệm vụ trọng tâm hôm nay: Nghe + Từ vựng</h3>
+  <div class="modlist">${focusTasks().map((t,ti)=>`<button class="mod" data-focus="${t.id}"><span class="ic" style="background:${SKILL_COLOR[t.skill]};color:#fff">${icon(t.skill)}</span><span><span class="t">${t.done?"✅":"Bước "+(ti+1)+"."} ${esc(t.t)}</span><br><span class="s">${esc(t.s)}</span></span><span class="sc">${t.done?"xong":""}</span></button>`).join("")}</div>
+  <h3 style="margin-top:16px">Kỹ năng khác</h3>
+  <div class="modlist">${mods.filter(x=>x[0]!=="vocab"&&x[0]!=="listening").map(([id,ic,t,s])=>{const ls=lastScore(id);return `<button class="mod" data-mod="${id}"><span class="ic" style="background:${SKILL_COLOR[id]};color:#fff">${icon(id)}</span><span><span class="t">${t}</span><br><span class="s">${s}</span></span><span class="sc">${lastBand(id)!=null?"band "+lastBand(id):ls!=null?ls+"/10":""}</span></button>`}).join("")}</div>
   <p class="muted small" style="margin-top:14px">Đồng hồ chỉ chạy khi con đang học trên màn hình này. Không thao tác quá 90 giây, đồng hồ tự dừng.</p>`;
   main.querySelectorAll("[data-mod]").forEach(b=>b.onclick=()=>startModule(b.dataset.mod));
+  const gn=$("#goNext");if(gn){const nf=nextFocus();gn.onclick=()=>runFocus(nf.id);if(justFinished){justFinished=false;say(`Next, step ${nf.n}.`,`Bước tiếp theo: ${nf.t}. Con bấm nút Bắt đầu nhé.`)}}
+  main.querySelectorAll("[data-focus]").forEach(b=>b.onclick=()=>({vocab:startVocab,listen:()=>chooseSource("listening"),dict:startDictation,cam:()=>startCambridge()})[b.dataset.focus]());
   const plb=$("#placeBtn");if(plb)plb.onclick=startPlacement;
+}
+function doneToday(fn){const k=dayKey();return S.sessions.some(s=>s.date===k&&s.status==="xong"&&fn(s))}
+function camNext(){const c=S.cam||{book:15,test:1,part:1};return c}
+function focusTasks(){const c=camNext();return [
+ {id:"vocab",skill:"vocab",t:"Từ vựng",s:`${computeQuota()} từ · thẻ nhớ, nghe – viết chính tả, kiểm tra`,done:doneToday(s=>s.type==="vocab")},
+ {id:"listen",skill:"listening",t:"Nghe IELTS",s:`1 bài · còn ${bankLeft(LISTENING_BANK,"L")}/${LISTENING_BANK.length} bài con chưa nghe`,done:doneToday(s=>s.type==="listening"&&!(s.details&&s.details.kind))},
+ {id:"dict",skill:"listening",t:"Nghe chép chính tả",s:"6 câu · nghe từng câu rồi gõ lại",done:doneToday(s=>s.details&&s.details.kind==="dict")},
+ {id:"cam",skill:"listening",t:"Đề thật: sách Cambridge / đề chính thức online",s:`Cambridge ${c.book} · Test ${c.test} · Part ${c.part} · nhập số câu đúng`,done:doneToday(s=>s.details&&s.details.kind==="cam")}]}
+/* ---- Nghe chép chính tả ---- */
+function dictLines(){const out=[];LISTENING_BANK.forEach(set=>set.lines.forEach(l=>{const n=l.text.split(/\s+/).length;if(n>=6&&n<=18)out.push({id:set.id+":"+l.text.slice(0,24),text:l.text,sp:l.speaker})}));return out}
+function startDictation(){
+  const all=dictLines();S.seen=S.seen||{};let seen=S.seen.D||[];let pool=all.filter(x=>!seen.includes(x.id));if(pool.length<6){seen=[];pool=all}
+  const items=shuffle(pool).slice(0,6);S.seen.D=seen.concat(items.map(x=>x.id)).slice(-400);save();
+  beginSession("listening");say("Listen to each sentence and type exactly what you hear.","Con nghe từng câu rồi gõ lại chính xác nhé. Được nghe lại 3 lần.");
+  let i=0,tot=0,ok=0;const res=[];
+  const show=()=>{
+    if(i>=items.length){const pct=tot?ok/tot:0;const rec=endSession(pct*10,{kind:"dict",correct:ok,total:tot,title:"Nghe chép chính tả"});
+      showResult(rec,`Nghe chép chính tả: ${ok}/${tot} từ đúng (${Math.round(pct*100)}%)`,`<p class="small muted">Chữ gạch đỏ là chữ con nghe sai – nghe lại và đọc to câu đó 2 lần.</p>${res.map(r=>`<p class="small">${r.html}</p>`).join("")}`);return}
+    const it=items[i];let plays=0;
+    main.innerHTML=`${sessionHead("Nghe chép chính tả")}<div class="progress"><i style="width:${i/items.length*100}%"></i></div><p class="muted small">Câu ${i+1}/${items.length} · được nghe 3 lần</p><div class="panel"><div class="row"><button class="btn teal" id="pl">🔊 Nghe câu</button><button class="btn ghost" id="sl">🐢 Nghe chậm</button></div><textarea id="dt" style="margin-top:10px;min-height:90px" autocapitalize="off" spellcheck="false" placeholder="Gõ lại câu con nghe được"></textarea><div class="row" style="margin-top:10px"><button class="btn" id="ck">Kiểm tra</button></div><div id="fb"></div></div>`;
+    bindQuit();const play=r=>{if(plays>=3){toast("Hết 3 lượt nghe.");return}plays++;speak(it.text,"en",{rate:r,pitch:it.sp==="A"?1.25:.85})};
+    $("#pl").onclick=()=>play(.92);$("#sl").onclick=()=>play(.7);setTimeout(()=>play(.92),400);
+    $("#ck").onclick=()=>{const a=$("#dt").value.trim();if(!a){toast("Con gõ câu nghe được trước nhé.");return}
+      const tw=norm(it.text).split(" "),aw=norm(a).split(" ");let c=0;const used=aw.slice();const marks=it.text.split(/\s+/).map((w,k)=>{const n=norm(w);const j=used.indexOf(n);if(j>=0){used.splice(j,1);c++;return esc(w)}return `<u style="color:var(--rose)">${esc(w)}</u>`});
+      tot+=tw.length;ok+=c;res.push({html:marks.join(" ")});
+      $("#fb").innerHTML=`<div class="review ${c===tw.length?"ok":"no"}" style="margin-top:10px">${c}/${tw.length} từ đúng<br>${marks.join(" ")}</div>`;
+      $("#ck").textContent=i===items.length-1?"Xem kết quả":"Câu tiếp";$("#ck").onclick=()=>{i++;show()}};
+  };show();
+}
+/* ---- Đề Cambridge từ sách: con tự nghe audio trong sách, app ghi kết quả ---- */
+const OFFICIAL_TESTS=[
+ {name:"British Council – đề Listening luyện tập miễn phí",url:"https://takeielts.britishcouncil.org/take-ielts/prepare/free-ielts-listening-practice-tests"},
+ {name:"British Council – đề thi thử Academic Listening (có tính giờ)",url:"https://takeielts.britishcouncil.org/prepare/ielts-free-practice-mock-tests/academic/listening"},
+ {name:"British Council – bài làm quen thi trên máy tính",url:"https://takeielts.britishcouncil.org/prepare/ielts-free-practice-mock-tests/ielts-familiarisation-test"},
+ {name:"IELTS.org – câu hỏi mẫu chính thức",url:"https://www.ielts.org/en-us/about-ielts/ielts-on-computer/sample-test-questions"}];
+const TASK_GUIDE={
+ vocab:["Đọc kỹ từng thẻ: từ, nghĩa, câu ví dụ, bấm 🔊 để nghe.","Làm bài kiểm tra: chọn nghĩa, nghe rồi gõ từ, gõ từ theo nghĩa.","Gõ lại đúng những từ sai, rồi làm khảo sát ngắn."],
+ listen:["Đọc trước câu hỏi bên dưới (khoảng 30 giây).","Bấm ▶ Nghe bài, vừa nghe vừa điền. Được nghe 2 lần.","Bấm Nộp bài, xem câu sai và lời giải thích."],
+ dict:["Nghe câu (được nghe 3 lần, có nút nghe chậm 🐢).","Gõ lại đúng từng chữ con nghe được.","Bấm Kiểm tra: chữ gạch đỏ là chữ con nghe sai."],
+ cam:["Chọn nguồn đề: sách Cambridge hoặc đề chính thức online.","Làm 10 câu theo hướng dẫn, nghe 1 lần như thi thật.","Chấm theo đáp án, quay lại app nhập số câu đúng."]};
+let justFinished=false;
+function nextFocus(){const t=focusTasks();const i=t.findIndex(x=>!x.done);return i<0?null:Object.assign({n:i+1,total:t.length},t[i])}
+function runFocus(id){({vocab:startVocab,listen:()=>chooseSource("listening"),dict:startDictation,cam:startCambridge})[id]()}
+function saveCam(n,online){
+  const c=camNext();beginSession("listening");session.active=Math.max(session.active,12*60);
+  const title=online?"Đề luyện chính thức (online)":`Cambridge ${c.book} Test ${c.test} Part ${c.part}`;
+  const rec=endSession(n,{kind:"cam",correct:n,total:10,band:rawToBand(n*4),title});
+  if(!online){let nx={...c,part:c.part+1};if(nx.part>4){nx.part=1;nx.test++}if(nx.test>4){nx.test=1;nx.book=nx.book>=20?15:nx.book+1}S.cam=nx;save()}
+  showResult(rec,`${title}: ${n}/10 câu đúng`);
+}
+const ERR_TYPES=["Sai chính tả","Số / ngày / giờ","Bị bẫy (người nói đổi ý)","Không kịp theo","Không biết từ đó"];
+function answerSheet(c){
+  const first=(c.part-1)*10+1,on=!!c.online,src=on?"trang đề":"sách",title=on?`${c.name.split(" – ")[0]} online · Part ${c.part}`:`Cambridge ${c.book} Test ${c.test} Part ${c.part}`;beginSession("listening");
+  main.innerHTML=`${sessionHead(on?`Đề online · Part ${c.part}`:`Cambridge ${c.book} · Test ${c.test} · Part ${c.part}`)}<div class="panel"><ol class="small" style="margin:0 0 8px;padding-left:18px"><li>Đọc trước câu ${first}–${first+9} trên ${src} (30 giây).</li><li>Phát audio Part ${c.part} trên ${src}, nghe <b>1 lần</b>, gõ đáp án vào các ô dưới.</li><li>Nghe xong bấm <b>Chấm bài</b>.</li></ol>
+  ${Array.from({length:10},(_,k)=>`<div class="q" style="display:flex;gap:8px;align-items:center"><span class="qn">${first+k}</span><input type="text" id="as${k}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`).join("")}
+  <div class="row" style="margin-top:10px"><button class="btn teal" id="asDone">Chấm bài</button></div></div>`;
+  bindQuit();say("Play the recording and type your answers. Listen only once.",`Con phát audio trên ${src}, nghe một lần và gõ đáp án vào phiếu nhé.`);
+  $("#asDone").onclick=()=>{const ans=Array.from({length:10},(_,k)=>$("#as"+k).value.trim());if(ans.filter(Boolean).length<5){toast("Con mới điền "+ans.filter(Boolean).length+" câu – điền thêm rồi chấm nhé.");return}
+    const mark=Array(10).fill(null),why=Array(10).fill(null),fix=Array(10).fill("");
+    const draw=()=>{main.innerHTML=`${sessionHead("Chấm theo đáp án cuối sách")}<div class="panel"><p class="small">${on?"Nộp bài trên trang đề để xem đáp án":`Mở <b>Answer Key</b> cuối sách Cambridge ${c.book}, Test ${c.test}`}. Với mỗi câu bấm ✓ hoặc ✗. Câu sai: gõ đáp án đúng và chọn vì sao sai.</p>
+      ${ans.map((a,k)=>`<div class="q" style="border-bottom:1px solid var(--line);padding:8px 0"><div class="row" style="justify-content:space-between"><span><span class="qn">${first+k}</span> Con viết: <b>${esc(a||"(trống)")}</b></span><span class="row"><button class="btn small ${mark[k]===1?"teal":"ghost"}" data-ok="${k}">✓</button><button class="btn small ${mark[k]===0?"":"ghost"}" data-no="${k}">✗</button></span></div>
+      ${mark[k]===0?`<input type="text" data-fix="${k}" placeholder="Đáp án đúng" value="${esc(fix[k])}" style="margin-top:6px"><div class="row" style="margin-top:6px;gap:6px">${ERR_TYPES.map((t,j)=>`<button class="chip" data-why="${k}:${j}" aria-pressed="${why[k]===j}">${t}</button>`).join("")}</div>`:""}</div>`).join("")}
+      <div class="row" style="margin-top:10px"><button class="btn teal" id="asSave">Lưu kết quả</button></div></div>`;bindQuit();
+      main.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{mark[+b.dataset.ok]=1;draw()});
+      main.querySelectorAll("[data-no]").forEach(b=>b.onclick=()=>{mark[+b.dataset.no]=0;draw()});
+      main.querySelectorAll("[data-fix]").forEach(i=>i.oninput=()=>{fix[+i.dataset.fix]=i.value});
+      main.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const[k,j]=b.dataset.why.split(":").map(Number);why[k]=j;draw()});
+      $("#asSave").onclick=()=>{if(mark.includes(null)){toast("Con chấm đủ 10 câu (✓ hoặc ✗) nhé.");return}if(mark.some((m,k)=>m===0&&why[k]==null)){toast("Chọn lý do cho các câu sai nhé.");return}
+        const n=mark.filter(m=>m===1).length,errs={};why.forEach(j=>{if(j!=null)errs[ERR_TYPES[j]]=(errs[ERR_TYPES[j]]||0)+1});
+        const wrong=ans.map((a,k)=>mark[k]===0?{q:first+k,a,fix:fix[k],why:ERR_TYPES[why[k]]}:null).filter(Boolean);
+        session.active=Math.max(session.active,8*60);
+        const rec=endSession(n,{kind:"cam",correct:n,total:10,band:rawToBand(n*4),title,errors:errs,wrong});
+        if(!on){let nx={...c,part:c.part+1};if(nx.part>4){nx.part=1;nx.test++}if(nx.test>4){nx.test=1;nx.book=nx.book>=20?15:nx.book+1}S.cam=nx}
+        S.camErr=S.camErr||{};Object.entries(errs).forEach(([t,v])=>S.camErr[t]=(S.camErr[t]||0)+v);save();
+        const top=Object.entries(S.camErr).sort((x,y)=>y[1]-x[1])[0];
+        const TIP={"Sai chính tả":"Luyện thêm Nghe chép chính tả và dạng nghe – viết từ.","Số / ngày / giờ":"Khi nghe số, viết ngay ra số; luyện đọc to số điện thoại, ngày tháng.","Bị bẫy (người nói đổi ý)":"Nghe tới hết câu: các từ but / actually / sorry thường báo đáp án đổi.","Không kịp theo":"Đọc trước câu hỏi, gạch chân từ khoá; luyện Section 3–4.","Không biết từ đó":"Ghi các từ này vào sổ và học lại trong phần Từ vựng."};
+        showResult(rec,`${title}: ${n}/10 câu đúng`,`${wrong.length?`<p><b>Câu sai</b></p>${wrong.map(w=>`<p class="small">Câu ${w.q}: con viết <b>${esc(w.a||"(trống)")}</b>${w.fix?` → đúng là <b>${esc(w.fix)}</b>`:""} · ${esc(w.why)}</p>`).join("")}`:"<p>Đúng cả 10 câu!</p>"}${top?`<p class="small"><b>Lỗi con hay gặp nhất:</b> ${esc(top[0])} (${top[1]} lần). ${esc(TIP[top[0]])}</p>`:""}`);
+      }};
+    draw();scrollTo(0,0)};
+}
+function scoreBox(id){return `<label class="f" for="${id}"><b>Bước cuối:</b> nhập số câu con làm đúng (0–10)</label><div class="row"><input type="number" id="${id}" min="0" max="10" inputmode="numeric" style="max-width:110px"><button class="btn teal" id="${id}Ok">Lưu kết quả</button></div>`}
+function readScore(id){const n=parseInt($("#"+id).value);if(!(n>=0&&n<=10)){toast("Nhập số câu đúng từ 0 đến 10.");return null}return n}
+function startCambridge(src){
+  const c=camNext();
+  if(!src){
+    main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">Đề thật</h2><button class="btn ghost small" id="bk">← Trang học</button></div>
+    <p class="muted">Bước 1: con chọn làm đề từ đâu.</p>
+    <div class="modlist"><button class="mod" id="srcBook"><span class="ic" style="background:${SKILL_COLOR.listening};color:#fff">📗</span><span><span class="t">Sách Cambridge IELTS</span><br><span class="s">Hôm nay: Cambridge ${c.book} · Test ${c.test} · Part ${c.part}</span></span></button>
+    <button class="mod" id="srcWeb"><span class="ic" style="background:${SKILL_COLOR.listening};color:#fff">🌐</span><span><span class="t">Đề chính thức online (miễn phí)</span><br><span class="s">British Council, IELTS.org – có audio và đáp án</span></span></button></div>`;
+    say("Choose where your test comes from.","Con chọn làm đề trong sách Cambridge, hoặc đề chính thức trên mạng nhé.");
+    $("#bk").onclick=()=>{tab="home";render()};$("#srcBook").onclick=()=>startCambridge("book");$("#srcWeb").onclick=()=>startCambridge("web");return;
+  }
+  if(src==="book"){
+    main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">Sách Cambridge ${c.book}</h2><button class="btn ghost small" id="bk">← Quay lại</button></div>
+    <div class="panel"><p><b>Hôm nay con làm: Cambridge ${c.book} – Test ${c.test} – Listening Part ${c.part}</b> (câu ${(c.part-1)*10+1}–${c.part*10})</p>
+    <ol><li>Mở sách đến <b>Test ${c.test}</b>, phần <b>Listening</b>, đọc trước câu hỏi Part ${c.part} trong 1 phút.</li>
+    <li>Quét <b>mã QR</b> trong sách (hoặc mở đĩa/ứng dụng audio của sách), phát <b>Part ${c.part}</b>.</li>
+    <li>Nghe <b>1 lần</b>, không dừng, vừa nghe vừa viết đáp án ra giấy.</li>
+    <li>Mở trang <b>Answer Key</b> cuối sách, chấm 10 câu. Câu sai: đọc lại Transcript, gạch chân chỗ có đáp án.</li></ol>
+    <div class="row"><button class="btn teal" id="sheetGo">📝 Mở phiếu trả lời trong app</button></div><p class="small muted">Phiếu có 10 ô đánh số, đồng hồ, chấm từng câu và ghi lại lỗi sai.</p></div>
+    <p class="small muted">Con không có sách ${c.book}? <button class="btn ghost small" id="chg">Đổi sang sách khác</button></p>`;
+    say(`Today: Cambridge ${c.book}, test ${c.test}, listening part ${c.part}. Listen only once.`,`Hôm nay con làm Cambridge ${c.book}, Test ${c.test}, Part ${c.part}. Nghe một lần như thi thật nhé.`);
+    $("#bk").onclick=()=>startCambridge();$("#sheetGo").onclick=()=>answerSheet(c);
+    $("#chg").onclick=async()=>{const r=await modal(`<h3>Đổi sách Cambridge</h3><label class="f" for="cb">Số sách con có (10–20)</label><input type="number" id="cb" min="10" max="20" value="${c.book}" inputmode="numeric">`,[{label:"Chọn",cls:"teal"},{label:"Huỷ",cls:"ghost"}]);
+      if(r.i===0){const k=parseInt(r.value);if(k>=10&&k<=20){S.cam={book:k,test:1,part:1};save();startCambridge("book")}else toast("Sách từ 10 đến 20.")}};
+    return;
+  }
+  main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">Đề chính thức online</h2><button class="btn ghost small" id="bk">← Quay lại</button></div>
+  <div class="panel"><ol><li><b>Chọn đề và phần</b> con sẽ làm.</li><li>Bấm <b>Mở đề</b> – trang đề mở ra. Bấm phát audio, nghe <b>1 lần</b>.</li>
+  <li>Vừa nghe vừa gõ đáp án vào <b>phiếu trả lời trong app</b> (bấm Mở phiếu). Trên iPhone: vuốt từ cạnh dưới lên để chuyển qua lại giữa trang đề và app.</li>
+  <li>Nộp bài trên trang đề để xem đáp án, rồi chấm từng câu trong app.</li></ol>
+  <label class="f" for="olT">Đề</label><select id="olT">${OFFICIAL_TESTS.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join("")}</select>
+  <label class="f" for="olP">Phần (Part)</label><select id="olP">${[1,2,3,4].map(n=>`<option value="${n}">Part ${n} (câu ${(n-1)*10+1}–${n*10})</option>`).join("")}</select>
+  <div class="row" style="margin-top:12px"><a class="btn ghost" id="olOpen" href="${OFFICIAL_TESTS[0].url}" target="_blank" rel="noopener">🌐 Mở đề</a><button class="btn teal" id="olSheet">📝 Mở phiếu trả lời</button></div>
+  <details style="margin-top:12px"><summary class="small">Chỉ nhập số câu đúng (không dùng phiếu)</summary>${scoreBox("wbN")}</details></div>`;
+  say("Choose a test and a part, open it, then answer on the sheet in the app.","Con chọn đề và phần, bấm Mở đề, rồi gõ đáp án vào phiếu trả lời trong app nhé.");
+  const tSel=$("#olT"),pSel=$("#olP");tSel.onchange=()=>{$("#olOpen").href=OFFICIAL_TESTS[+tSel.value].url};
+  $("#olSheet").onclick=()=>answerSheet({online:true,name:OFFICIAL_TESTS[+tSel.value].name,part:+pSel.value});
+  $("#bk").onclick=()=>startCambridge();$("#wbNOk").onclick=()=>{const n=readScore("wbN");if(n!=null)saveCam(n,true)};
 }
 function startModule(id){({vocab:startVocab,reading:()=>chooseSource("reading"),listening:()=>chooseSource("listening"),writing:()=>startWriting(),speaking:()=>startSpeaking()})[id]()}
 
@@ -952,7 +1338,7 @@ function aiFail(e){if(e&&e.code==="bad_key")toast("Khoá API chưa đúng. Bố 
 
 /* ============ Vocabulary ============ */
 function computeQuota(){const v=S.sessions.filter(s=>s.type==="vocab"&&s.score!=null).slice(-3);let n=levelBand()<5?10:12;if(v.length){const a=v.reduce((x,s)=>x+s.score,0)/v.length;if(a>=9)n=18;else if(a>=8)n=15;else if(a<5)n=10}return Math.max(8,Math.min(20,n+surveyAdj()*4))}
-function pickWords(n){const pool=allWords();const wrongs=shuffle(pool.filter(w=>(S.wrong[w.w]||0)>0)).slice(0,Math.ceil(n/3));const un=pool.filter(w=>!S.learned[w.w]&&!wrongs.includes(w));const fresh=shuffle(un.filter(w=>w.b1)).concat(shuffle(un.filter(w=>!w.b1)));const old=shuffle(pool.filter(w=>S.learned[w.w]&&!wrongs.includes(w)));return wrongs.concat(fresh,old).slice(0,n)}
+function pickWords(n){const pool=allWords();const wrongs=shuffle(pool.filter(w=>(S.wrong[w.w]||0)>0)).slice(0,Math.ceil(n/3));const un=pool.filter(w=>!S.learned[w.w]&&!wrongs.includes(w));const fresh=levelBand()>=5?shuffle(un.filter(w=>!w.b1)).concat(shuffle(un.filter(w=>w.b1))):shuffle(un.filter(w=>w.b1)).concat(shuffle(un.filter(w=>!w.b1)));const old=shuffle(pool.filter(w=>S.learned[w.w]&&!wrongs.includes(w)));return wrongs.concat(fresh,old).slice(0,n)}
 function startVocab(){
   const n=computeQuota();const words=pickWords(n);
   beginSession("vocab");
@@ -973,13 +1359,13 @@ function vocabLearn(words,i){
 }
 function vocabQuiz(words){
   const pool=allWords();
-  const qs=shuffle(words).map((w,i)=>i%2===0?{kind:"mcq",w,opts:shuffle([w.vi,...shuffle(pool.filter(x=>x.w!==w.w)).slice(0,3).map(x=>x.vi)])}:{kind:"type",w});
+  const qs=shuffle(words).map((w,i)=>i%3===0?{kind:"mcq",w,opts:shuffle([w.vi,...shuffle(pool.filter(x=>x.w!==w.w)).slice(0,3).map(x=>x.vi)])}:i%3===1?{kind:"listen",w}:{kind:"type",w});
   const wrong=[];let correct=0;
   say("Quiz time. No rushing — read every option before you choose.");
   const show=i=>{
     if(i>=qs.length)return vocabFix(words,wrong,correct,qs.length);
     const q=qs[i],t0=Date.now();
-    main.innerHTML=`${sessionHead("Kiểm tra từ vựng")}<div class="progress"><i style="width:${i/qs.length*100}%"></i></div><p class="muted small">Câu ${i+1}/${qs.length}</p><div class="panel" id="qp">${q.kind==="mcq"?`<p class="small muted">Chọn nghĩa đúng của từ</p><div class="flash" style="padding:6px"><div class="word">${esc(q.w.w)}</div></div><div class="choices">${q.opts.map(o=>`<button class="choice">${esc(o)}</button>`).join("")}</div>`:`<p class="small muted">Gõ từ tiếng Anh có nghĩa</p><div class="flash" style="padding:6px"><div class="vi" style="font-size:1.5rem">${esc(q.w.vi)}</div><p class="muted">Gợi ý: bắt đầu bằng “${esc(q.w.w[0])}”, ${q.w.w.length} chữ cái</p></div><input type="text" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="row" style="margin-top:10px"><button class="btn teal" id="ok">Kiểm tra</button></div>`}</div>`;
+    main.innerHTML=`${sessionHead("Kiểm tra từ vựng")}<div class="progress"><i style="width:${i/qs.length*100}%"></i></div><p class="muted small">Câu ${i+1}/${qs.length}</p><div class="panel" id="qp">${q.kind==="mcq"?`<p class="small muted">Chọn nghĩa đúng của từ</p><div class="flash" style="padding:6px"><div class="word">${esc(q.w.w)}</div></div><div class="choices">${q.opts.map(o=>`<button class="choice">${esc(o)}</button>`).join("")}</div>`:(q.kind==="listen"?`<p class="small muted">Nghe và viết đúng chính tả từ (như bài Nghe IELTS)</p><div class="flash" style="padding:6px"><button class="btn ghost" id="lsn">🔊 Nghe từ</button><p class="muted">${q.w.w.length} chữ cái</p></div>`:`<p class="small muted">Gõ từ tiếng Anh có nghĩa</p><div class="flash" style="padding:6px"><div class="vi" style="font-size:1.5rem">${esc(q.w.vi)}</div><p class="muted">Gợi ý: bắt đầu bằng “${esc(q.w.w[0])}”, ${q.w.w.length} chữ cái</p></div>`)+`<input type="text" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="row" style="margin-top:10px"><button class="btn teal" id="ok">Kiểm tra</button></div>`}</div>`;
     bindQuit();
     const finish=(ok,btn)=>{
       const dt=(Date.now()-t0)/1000;
@@ -988,7 +1374,7 @@ function vocabQuiz(words){
       setTimeout(()=>show(i+1),ok?650:1500);
     };
     if(q.kind==="mcq"){main.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{main.querySelectorAll(".choice").forEach(x=>{x.disabled=true;if(x.textContent===q.w.vi)x.classList.add("right")});const ok=b.textContent===q.w.vi;if(!ok)b.classList.add("wrong");finish(ok)})}
-    else{const inp=$("#ans");inp.focus();const go=()=>{if(!inp.value.trim())return;const ok=norm(inp.value)===norm(q.w.w);inp.disabled=true;$("#ok").disabled=true;inp.insertAdjacentHTML("afterend",`<div class="review ${ok?"ok":"no"}">${ok?"Chính xác!":"Đáp án: <b>"+esc(q.w.w)+"</b>"}</div>`);finish(ok)};$("#ok").onclick=go;inp.onkeydown=e=>{if(e.key==="Enter")go()}}
+    else{if(q.kind==="listen"){const lb=$("#lsn");const play=()=>speak(q.w.w,"en",{rate:.85});lb.onclick=play;setTimeout(play,300)}const inp=$("#ans");inp.focus();const go=()=>{if(!inp.value.trim())return;const ok=norm(inp.value)===norm(q.w.w);inp.disabled=true;$("#ok").disabled=true;inp.insertAdjacentHTML("afterend",`<div class="review ${ok?"ok":"no"}">${ok?"Chính xác!":"Đáp án: <b>"+esc(q.w.w)+"</b>"}</div>`);finish(ok)};$("#ok").onclick=go;inp.onkeydown=e=>{if(e.key==="Enter")go()}}
   };
   show(0);
 }
@@ -1011,11 +1397,18 @@ function vocabDone(correct,total,words){
 }
 
 /* ============ Reading & Listening ============ */
+function pickFresh(bank,key){S.seen=S.seen||{};let seen=S.seen[key]||[];let pool=bank.filter(s=>!seen.includes(s.id));if(!pool.length){seen=[];pool=bank.slice()}
+  const lastId=seen[seen.length-1];if(pool.length>1)pool=pool.filter(s=>s.id!==lastId);
+  if(key==="L"&&levelBand()>=5){const hard=pool.filter(s=>(s.sec||1)>=2);if(hard.length&&Math.random()<.7)pool=hard}
+  const s=pick(pool);S.seen[key]=seen.concat([s.id]).slice(-bank.length);save();return s}
+function bankLeft(bank,key){const seen=(S.seen||{})[key]||[];return bank.filter(s=>!seen.includes(s.id)).length}
 async function chooseSource(skill){
   const label=skill==="reading"?"Đọc hiểu":"Nghe";
-  const r=await modal(`<h3>${label}</h3><p>Làm đề có sẵn, hay để cô soạn một đề mới theo dạng IELTS gần đây?</p><p class="muted small">Đề mới do AI soạn, mất khoảng 1 phút và dùng lượt Claude của tài khoản đang mở.</p>`,[{label:"Đề có sẵn",cls:"ghost"},{label:"Đề mới (AI)",cls:"teal"},{label:"Huỷ",cls:"ghost"}]);
+  const bank=skill==="reading"?READING_BANK:LISTENING_BANK,key=skill==="reading"?"R":"L";
+  const ai=await getSample();
+  const r=ai?await modal(`<h3>${label}</h3><p>Làm bài có sẵn (còn ${bankLeft(bank,key)}/${bank.length} bài con chưa làm), hay để cô soạn một đề mới theo dạng IELTS gần đây?</p><p class="muted small">Đề mới do AI soạn, mất khoảng 1 phút.</p>`,[{label:"Bài có sẵn",cls:"ghost"},{label:"Đề mới (AI)",cls:"teal"},{label:"Huỷ",cls:"ghost"}]):{i:0};
   if(r.i===2)return;
-  let set=skill==="reading"?READING_SET:LISTENING_SET;
+  let set=pickFresh(bank,key);
   if(r.i===1){loading("Cô đang soạn đề mới");set=(skill==="reading"?await genReading(8):await genListening(8,pick([1,2,3])))||set}
   beginSession(skill);
   runQuizSet(clone(set),skill,{onDone:res=>{const rec=endSession(res.correct/res.total*10,{correct:res.correct,total:res.total,band:rawToBand(res.correct/res.total*40),title:set.title});showResult(rec,`${res.correct}/${res.total} câu đúng (${Math.round(res.correct/res.total*100)}%)`)}});
@@ -1231,7 +1624,7 @@ async function runMock(skills,full){
         if(!session)return;
         loading(`Đang chuẩn bị ${SKILL_NAME[sk]} phần ${p+1}`);
         let set=sk==="reading"?await genReading(full?13:10,true):await genListening(10,full?p+1:pick([1,2]),true);
-        if(!set)set=clone(sk==="reading"?READING_SET:LISTENING_SET);
+        if(!set)set=clone(pickFresh(sk==="reading"?READING_BANK:LISTENING_BANK,sk==="reading"?"R":"L"));
         if(!session)return;
         const r=await new Promise(res=>runQuizSet(set,sk,{mock:true,timeLimit:sk==="reading"?20*60:10*60,partLabel:`${SKILL_NAME[sk]} · phần ${p+1}/${parts}`,onDone:res}));
         c+=r.correct;t+=r.total;
@@ -1270,7 +1663,7 @@ async function runMock(skills,full){
 /* ============ Level & study plan ============ */
 function daysBetween(a,b){const p=k=>{const[y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)};return Math.round((p(b)-p(a))/864e5)}
 function fmtDate(k){const[y,m,d]=k.split("-");return `${+d}/${+m}/${y}`}
-function levelBand(){return S.level?S.level.overall:(S.settings.centerScore||5)}
+function levelBand(){const c=S.settings.currentBand;if(c)return Math.max(c,S.level?S.level.overall:0);return S.level?S.level.overall:(S.settings.centerScore||5)}
 function startBand(){return Math.min(6.5,S.settings.centerScore||(S.level&&S.level.overall)||4.5)}
 function planInfo(){
   const start=S.settings.planStart||S.firstDay||dayKey(),end=S.settings.targetDate||"2028-05-31";
@@ -1402,6 +1795,7 @@ async function renderParent(){
   <label class="f" for="sVal">Giá trị 1 sticker (đồng)</label><input type="number" id="sVal" min="0" step="1000" value="${S.settings.stickerValue}">
   <label class="f" for="sCap">Tối đa sticker mỗi ngày</label><input type="number" id="sCap" min="1" max="10" value="${S.settings.stickerCap||3}">
   <label class="f" for="sOff">Số sticker đổi 1 ngày nghỉ</label><input type="number" id="sOff" min="1" value="${S.settings.dayOffCost}">
+  <label class="f" for="sCur">Band hiện tại của con (kết quả thi thử gần nhất ở trung tâm)</label><input type="number" id="sCur" min="1" max="9" step="0.5" value="${S.settings.currentBand||""}">
   <label class="f" for="sCenter">Điểm đầu vào ở trung tâm</label><input type="number" id="sCenter" min="1" max="9" step="0.5" value="${S.settings.centerScore}">
   <label class="f" for="sTarget">Hạn đạt 6.5 (hết lớp 12)</label><input type="date" id="sTarget" value="${esc(S.settings.targetDate)}">
   <label class="f" for="sGrade">Lớp hiện tại</label><input type="text" id="sGrade" value="${esc(S.settings.grade)}">
@@ -1430,7 +1824,7 @@ async function renderParent(){
   $("#saveSet").onclick=()=>{
     const st=S.settings;st.email=$("#sEmail").value.trim();st.childName=$("#sName").value.trim()||"Ngân Hà";
     st.dailyMin=Math.max(10,parseInt($("#sMin").value)||30);st.stickerValue=Math.max(0,parseInt($("#sVal").value)||0);st.dayOffCost=Math.max(1,parseInt($("#sOff").value)||5);st.stickerCap=Math.max(1,parseInt($("#sCap").value)||3);
-    st.centerScore=roundBand(parseFloat($("#sCenter").value)||4.5);st.targetDate=$("#sTarget").value||st.targetDate;st.grade=$("#sGrade").value.trim()||st.grade;st.apiKey=$("#sKey").value.trim();st.apiModel=$("#sModel").value.trim()||"claude-sonnet-5-5";st.webhookUrl=$("#sHook").value.trim();st.webhookToken=$("#sTok").value.trim();st.openEmail=$("#sOpenMail").checked;setTimeout(flushOutbox,500);
+    st.centerScore=roundBand(parseFloat($("#sCenter").value)||5);{const cb=parseFloat($("#sCur").value);st.currentBand=cb?roundBand(cb):null}st.targetDate=$("#sTarget").value||st.targetDate;st.grade=$("#sGrade").value.trim()||st.grade;st.apiKey=$("#sKey").value.trim();st.apiModel=$("#sModel").value.trim()||"claude-sonnet-5-5";st.webhookUrl=$("#sHook").value.trim();st.webhookToken=$("#sTok").value.trim();st.openEmail=$("#sOpenMail").checked;setTimeout(flushOutbox,500);
     const np=$("#sPin").value.trim();if(np){if(np.length<4){toast("PIN cần ít nhất 4 số.");return}st.pin=np;st.pinChanged=true}
     save();toast("Đã lưu cài đặt.");renderParent();
   };
