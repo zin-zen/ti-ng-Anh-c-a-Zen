@@ -1237,7 +1237,7 @@ function renderHome(){
   const pend=pendingSurveyRec();if(pend){renderPendingSurvey(pend);return}
   const k=dayKey(),m=dayMinutes(k),goal=S.settings.dailyMin,done=m>=goal,dayOff=S.dayOffs.includes(k);
   const q=computeQuota(),P=planInfo();
-  const mods=[["vocab","🔤","Từ vựng",`${q} từ hôm nay · thẻ nhớ + kiểm tra`],["reading","📖","Đọc hiểu","Đoạn văn Academic, câu hỏi chuẩn IELTS"],["listening","🎧","Nghe","Hội thoại, điền từ, trắc nghiệm"],["writing","✍️","Viết","Task 1 / Task 2, cô chấm theo 4 tiêu chí"],["speaking","🎙️","Nói","Part 1–3, nói hoặc gõ câu trả lời"]];
+  const mods=[["vocab","🔤","Từ vựng",`${q} từ hôm nay · thẻ nhớ + kiểm tra`],["reading","📖","Đọc hiểu","Đoạn văn Academic, câu hỏi chuẩn IELTS"],["listening","🎧","Nghe","Hội thoại, điền từ, trắc nghiệm"],["writing","✍️","Viết",bookWSPick("w")?"Đề Writing trong sách Cambridge · cô chấm 4 tiêu chí":"Task 1 / Task 2, cô chấm theo 4 tiêu chí"],["speaking","🎙️","Nói",bookWSPick("s")?"Câu hỏi Speaking trong sách Cambridge · cô nhận xét":"Part 1–3, nói hoặc gõ câu trả lời"]];
   main.innerHTML=`
   <section class="today">${ringSVG(m/goal)}<div><h2>${done?"Xong nhiệm vụ hôm nay!":`Còn ${Math.ceil(goal-m)} phút nữa`}</h2><div class="muted small">Đã học ${Math.floor(m)} / ${goal} phút · ⭐ ${stickerBalance()} sticker</div></div></section>
   ${dayOff?`<div class="banner ok">Hôm nay là ngày nghỉ con đã đổi bằng sticker. Học thêm vẫn được cộng điểm!</div>`:""}
@@ -1247,9 +1247,9 @@ function renderHome(){
   ${!S.level?`<div class="banner">Con chưa làm test đầu vào trong app. <button class="btn small teal" id="placeBtn" style="margin-left:6px">Làm test (~30 phút)</button></div>`:""}
   <p class="small muted">Lộ trình tuần ${P.week}: <b>${esc(P.focus.focus)}</b> · chủ đề ${esc(P.focus.topic)}</p>
   ${(()=>{const nf=nextFocus();return nf?`<div class="panel" style="border:2px solid var(--teal)"><p class="small muted" style="margin:0">Việc con cần làm tiếp – bước ${nf.n}/${nf.total}</p><h3 style="margin:4px 0 6px">${esc(nf.t)}</h3><ol class="small" style="margin:0 0 10px;padding-left:20px">${TASK_GUIDE[nf.id].map(s=>`<li>${esc(s)}</li>`).join("")}</ol><button class="btn teal" id="goNext">▶ Bắt đầu bước ${nf.n}</button></div>`:`<div class="banner ok">Con đã xong cả 4 nhiệm vụ trọng tâm hôm nay! Muốn học thêm, chọn bất kỳ bài nào bên dưới.</div>`})()}
-  <h3 style="margin-top:6px">Nhiệm vụ trọng tâm hôm nay: Nghe + Từ vựng</h3>
+  <h3 style="margin-top:6px">Nhiệm vụ trọng tâm hôm nay: ${bookMode()&&bookRNext()?"Nghe + Đọc + Từ vựng":"Nghe + Từ vựng"}</h3>
   <div class="modlist">${focusTasks().map((t,ti)=>`<button class="mod" data-focus="${t.id}"><span class="ic" style="background:${SKILL_COLOR[t.skill]};color:#fff">${icon(t.skill)}</span><span><span class="t">${t.done?"✅":"Bước "+(ti+1)+"."} ${esc(t.t)}</span><br><span class="s">${esc(t.s)}</span></span><span class="sc">${t.done?"xong":""}</span></button>`).join("")}</div>
-  ${(()=>{const o=optionalTask();return `<p class="small muted" style="margin:8px 0 4px">Làm thêm nếu còn thời gian (không bắt buộc – ngày mai bước này sẽ là bước chính):</p><div class="modlist"><button class="mod" data-focus="${o.id}"><span class="ic" style="background:${SKILL_COLOR[o.skill]};color:#fff">${icon(o.skill)}</span><span><span class="t">${o.done?"✅ ":""}${esc(o.t)}</span><br><span class="s">${esc(o.s)}</span></span></button></div>`})()}
+  ${(()=>{const O=optionalTasks();return O.length?`<p class="small muted" style="margin:8px 0 4px">Làm thêm nếu còn thời gian (không bắt buộc${bookMode()?"":" – ngày mai bước này sẽ là bước chính"}):</p><div class="modlist">${O.map(o=>`<button class="mod" data-focus="${o.id}"><span class="ic" style="background:${SKILL_COLOR[o.skill]};color:#fff">${icon(o.skill)}</span><span><span class="t">${o.done?"✅ ":""}${esc(o.t)}</span><br><span class="s">${esc(o.s)}</span></span></button>`).join("")}</div>`:""})()}
   <h3 style="margin-top:16px">Kỹ năng khác</h3>
   <div class="modlist">${mods.filter(x=>x[0]!=="vocab"&&x[0]!=="listening").map(([id,ic,t,s])=>{const ls=lastScore(id);return `<button class="mod" data-mod="${id}"><span class="ic" style="background:${SKILL_COLOR[id]};color:#fff">${icon(id)}</span><span><span class="t">${t}</span><br><span class="s">${s}</span></span><span class="sc">${lastBand(id)!=null?"band "+lastBand(id):ls!=null?ls+"/10":""}</span></button>`}).join("")}</div>
   <div class="modlist" style="margin-top:10px"><button class="mod" id="libBtn"><span class="ic" style="background:${SKILL_COLOR.reading};color:#fff">📚</span><span><span class="t">Thư viện luyện tập chính thống</span><br><span class="s">British Council, IDP, IELTS.org, BBC – Nghe, Đọc, Viết, Nói</span></span></button></div>
@@ -1257,7 +1257,7 @@ function renderHome(){
   main.querySelectorAll("[data-mod]").forEach(b=>b.onclick=()=>startModule(b.dataset.mod));
   const lb=$("#libBtn");if(lb)lb.onclick=renderLibrary;
   const gn=$("#goNext");if(gn){const nf=nextFocus();gn.onclick=()=>runFocus(nf.id);if(justFinished){justFinished=false;say(`Next, step ${nf.n}.`,`Bước tiếp theo: ${nf.t}. Con bấm nút Bắt đầu nhé.`)}}
-  main.querySelectorAll("[data-focus]").forEach(b=>b.onclick=()=>({vocab:startVocab,listen:()=>chooseSource("listening"),dict:startDictation,cam:()=>startCambridge(),extra:startExtra})[b.dataset.focus]());
+  main.querySelectorAll("[data-focus]").forEach(b=>b.onclick=()=>runFocus(b.dataset.focus));
   const plb=$("#placeBtn");if(plb)plb.onclick=startPlacement;
 }
 function doneToday(fn){const k=dayKey();return S.sessions.some(s=>s.date===k&&s.status==="xong"&&fn(s))}
@@ -1267,10 +1267,13 @@ function allFocusTasks(){const c=camNext();return [
  {id:"listen",skill:"listening",t:"Nghe IELTS",s:`1 bài · còn ${bankLeft(LISTENING_BANK,"L")}/${LISTENING_BANK.length} bài con chưa nghe`,done:doneToday(s=>s.type==="listening"&&!(s.details&&s.details.kind))},
  {id:"dict",skill:"listening",t:"Nghe chép chính tả",s:"6 câu · nghe từng câu rồi gõ lại",done:doneToday(s=>s.details&&s.details.kind==="dict")},
  {id:"cam",skill:"listening",t:bookNext()?"Đề Cambridge (sách của nhà)":officialNext()?"Đề chính thức (British Council / IELTS.org)":"Đề thi Nghe (như thi thật)",s:bookNext()?`Cambridge ${bookNext().b.n} · Test ${bookNext().t} · Part ${bookNext().p}`:officialNext()?"Làm ngay trong app · chấm theo đáp án chính thức":`Part ${examPart()} · làm ngay trong app, cô chấm ngay`,done:doneToday(s=>s.details&&s.details.kind==="cam")},
- {id:"extra",skill:"listening",t:"Nghe thêm: BBC 6 Minute English",s:"1 tập ~6 phút · trả lời 3 câu, ghi 3 từ mới",done:doneToday(s=>s.details&&s.details.kind==="extra")}]}
+ {id:"extra",skill:"listening",t:"Nghe thêm: BBC 6 Minute English",s:"1 tập ~6 phút · trả lời 3 câu, ghi 3 từ mới",done:doneToday(s=>s.details&&s.details.kind==="extra")}].concat(bookRNext()?[{id:"camR",skill:"reading",t:"Đọc Cambridge (sách của nhà)",s:`Cambridge ${bookRNext().b.n} · Test ${bookRNext().t} · Reading Passage ${bookRNext().p} · ~20 phút`,done:doneToday(s=>s.details&&s.details.kind==="camR")}]:[])}
 function altId(){const k=dayKey();const did=id=>doneToday(s=>s.details&&s.details.kind===id);if(did("cam"))return "cam";if(did("extra"))return "extra";return daysBetween(S.firstDay||k,k)%2===0?"cam":"extra"}
-function focusTasks(){const a=altId();return allFocusTasks().filter(t=>t.id!==(a==="cam"?"extra":"cam"))}
-function optionalTask(){const a=altId();return allFocusTasks().find(t=>t.id===(a==="cam"?"extra":"cam"))}
+/* v3.7: có sách Cambridge trên máy → mỗi ngày: Từ vựng, Nghe Cambridge (1 Part), Đọc Cambridge (1 bài đọc), Nghe chép chính tả; Nghe IELTS + BBC thành phần làm thêm */
+function bookMode(){return !!bookNext()}
+function focusTasks(){const A=allFocusTasks();if(bookMode()){const by=id=>A.find(t=>t.id===id);return ["vocab","cam","camR","dict"].map(by).filter(Boolean)}const a=altId();return A.filter(t=>t.id!=="camR"&&t.id!==(a==="cam"?"extra":"cam"))}
+function optionalTasks(){const A=allFocusTasks();if(bookMode())return A.filter(t=>t.id==="listen"||t.id==="extra");const a=altId();return A.filter(t=>t.id===(a==="cam"?"extra":"cam"))}
+function optionalTask(){return optionalTasks()[0]}
 const EXTRA_SRC=[{name:"BBC 6 Minute English (Apple Podcasts)",url:"https://podcasts.apple.com/podcast/262026947?l=en"},{name:"BBC Learning English (trang web)",url:"https://www.bbc.co.uk/learningenglish"}];
 const LIBRARY=[
  {skill:"listening",t:"Nghe (Listening)",items:[
@@ -1347,6 +1350,7 @@ const OFFICIAL_TESTS=[
  {name:"British Council – bài làm quen thi trên máy tính",url:"https://takeielts.britishcouncil.org/prepare/ielts-free-practice-mock-tests/ielts-familiarisation-test"},
  {name:"IELTS.org – câu hỏi mẫu chính thức",url:"https://www.ielts.org/en-us/about-ielts/ielts-on-computer/sample-test-questions"}];
 const TASK_GUIDE={
+ camR:["Bấm Bắt đầu: đề bài đọc của sách hiện bên trái (hoặc phía trên).","Làm trong khoảng 20 phút như thi thật, gõ đáp án vào các ô.","Nộp bài, rồi chọn lý do cho từng câu sai."],
  vocab:["Đọc kỹ từng thẻ: từ, nghĩa, câu ví dụ, bấm 🔊 để nghe.","Làm bài kiểm tra: chọn nghĩa, nghe rồi gõ từ, gõ từ theo nghĩa.","Gõ lại đúng những từ sai, rồi làm khảo sát ngắn."],
  listen:["Đọc trước câu hỏi bên dưới (khoảng 30 giây).","Bấm ▶ Nghe bài, vừa nghe vừa điền. Được nghe 2 lần.","Bấm Nộp bài, xem câu sai và lời giải thích."],
  dict:["Nghe câu (được nghe 3 lần, có nút nghe chậm 🐢).","Gõ lại đúng từng chữ con nghe được.","Bấm Kiểm tra: chữ gạch đỏ là chữ con nghe sai."],
@@ -1354,7 +1358,7 @@ const TASK_GUIDE={
  cam:["Bấm ▶ Bắt đầu đề thi – làm ngay trong app, không cần mở web.","Đọc câu hỏi trước, nghe 1 lần, vừa nghe vừa điền.","Nộp bài, viết lý do cho từng câu sai."]};
 let justFinished=false;
 function nextFocus(){const t=focusTasks();const i=t.findIndex(x=>!x.done);return i<0?null:Object.assign({n:i+1,total:t.length},t[i])}
-function runFocus(id){({vocab:startVocab,listen:()=>chooseSource("listening"),dict:startDictation,cam:()=>startCambridge(),extra:startExtra})[id]()}
+function runFocus(id){({vocab:startVocab,listen:()=>chooseSource("listening"),dict:startDictation,cam:()=>startCambridge(),extra:startExtra,camR:startBookReading})[id]()}
 function saveCam(n,online){
   const c=camNext();beginSession("listening");session.active=Math.max(session.active,12*60);
   const title=online?"Đề luyện chính thức (online)":`Cambridge ${c.book} Test ${c.test} Part ${c.part}`;
@@ -1624,13 +1628,13 @@ function officialRoom(it){
   say("Listen once on the official test, and type your answers here in order.","Con nghe một lần trên trang đề, gõ đáp án vào phiếu theo thứ tự câu nhé.");
 }
 function officialReasons(it,r,onFinish){
-  main.style.maxWidth="";const items=r.items,W=items.map((x,i)=>x.correct===false?i:null).filter(i=>i!=null),why={},rs={},correct=items.filter(x=>x.correct===true).length,total=items.length;
-  const finish=()=>{if(!onFinish)S.offDone=(S.offDone||[]).concat([it.id]);camSave({online:false,exam:true,short:true,part:0},onFinish?it.label:`Đề chính thức · ${it.label}`,correct,total,W.map(i=>({q:items[i].q,a:items[i].student||"",fix:String(items[i].key||""),why:ERR_TYPES[why[i]]||"",rs:(rs[i]||"").trim()})),{verify:r.local?"auto":"ai",official:!onFinish,book:!!onFinish,offId:it.id});onFinish&&onFinish()};
+  main.style.maxWidth="";const ET=it.err||ERR_TYPES;const items=r.items,W=items.map((x,i)=>x.correct===false?i:null).filter(i=>i!=null),why={},rs={},correct=items.filter(x=>x.correct===true).length,total=items.length;
+  const finish=()=>{if(!onFinish)S.offDone=(S.offDone||[]).concat([it.id]);camSave({online:false,exam:true,short:true,part:0},onFinish?it.label:`Đề chính thức · ${it.label}`,correct,total,W.map(i=>({q:items[i].q,a:items[i].student||"",fix:String(items[i].key||""),why:ET[why[i]]||"",rs:(rs[i]||"").trim()})),{verify:r.local?"auto":"ai",official:!onFinish,book:!!onFinish,offId:it.id,kind:it.kind||"cam"});onFinish&&onFinish()};
   if(!W.length){finish();return}
   const draw=()=>{main.innerHTML=`${sessionHead("Câu sai và lý do")}<div class="panel"><div class="banner ok">✔ Cô đã chấm theo <b>${onFinish?"đáp án của sách":"đáp án chính thức"}</b>: <b>${correct}/${total}</b> câu đúng.${r.note?" "+esc(r.note):""}</div>
     ${W.map(i=>{const x=items[i];return `<div class="q" style="border-top:1px solid var(--line);padding:10px 0"><p class="small" style="margin:0 0 6px"><span class="qn">${esc(x.q)}</span> Con viết: <b>${esc(x.student||"(trống)")}</b> · Đáp án chính thức: <b>${esc(x.key||"")}</b></p>
-      <input type="text" data-rs="${i}" placeholder="Vì sao con chọn như vậy? (VD: nghe fifteen tưởng là fifty)" value="${esc(rs[i]||"")}">
-      <div class="row" style="margin-top:6px;gap:6px">${ERR_TYPES.map((t,j)=>`<button class="chip" data-why="${i}:${j}" aria-pressed="${why[i]===j}">${t}</button>`).join("")}</div></div>`}).join("")}
+      <input type="text" data-rs="${i}" placeholder="Vì sao con chọn như vậy? (${esc(it.hint||"VD: nghe fifteen tưởng là fifty")})" value="${esc(rs[i]||"")}">
+      <div class="row" style="margin-top:6px;gap:6px">${ET.map((t,j)=>`<button class="chip" data-why="${i}:${j}" aria-pressed="${why[i]===j}">${t}</button>`).join("")}</div></div>`}).join("")}
     <div class="row" style="margin-top:12px"><button class="btn teal" id="ofSave">Lưu kết quả</button></div></div>`;
     bindQuit();
     main.querySelectorAll("[data-rs]").forEach(el=>el.oninput=()=>{rs[+el.dataset.rs]=el.value});
@@ -1693,8 +1697,8 @@ async function bDelKey(k){try{const db=await bdb();await new Promise(res=>{const
 async function cleanTmp(){try{const db=await bdb();const keys=[],refs=new Set();await new Promise(res=>{const c=db.transaction("f").objectStore("f").openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return res();const k=String(x.key);if(k.startsWith("tmp-"))keys.push(k);else if(x.value&&x.value.ref&&!(x.value instanceof Blob))refs.add(x.value.ref);x.continue()};c.onerror=()=>res()});
   for(const k of keys)if(!refs.has(k))await bDelKey(k)}catch(e){}}
 async function bDel(prefix){try{const db=await bdb();await new Promise(res=>{const st=db.transaction("f","readwrite").objectStore("f");const c=st.openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return res();if(String(x.key).startsWith(prefix))x.delete();x.continue()};c.onerror=()=>res()})}catch(e){}}
-function parseKeyLines(lines){
-  const out=[],seen={},put=(q,a,g)=>{q=+q;a=String(a||"").trim().replace(/\s+/g," ");if(!(q>=1&&q<=40)||!a||seen[q]||/^(questions?|part)\b/i.test(a))return;seen[q]=1;let st=false;if(/\*\s*$/.test(a)){a=a.replace(/\s*\*+\s*$/,"");st=true}const o=g?{q,a,g}:{q,a};if(st)o._st=1;out.push(o)};
+function parseKeyLines(lines,occ){occ=occ||1;
+  const out=[],cnt={},put=(q,a,g)=>{q=+q;a=String(a||"").trim().replace(/\s+/g," ");if(!(q>=1&&q<=40)||!a||/^(questions?|part)\b/i.test(a))return;cnt[q]=(cnt[q]||0)+1;if(cnt[q]!==occ)return;let st=false;if(/\*\s*$/.test(a)){a=a.replace(/\s*\*+\s*$/,"");st=true}const o=g?{q,a,g}:{q,a};if(st)o._st=1;out.push(o)};
   const isNum=x=>/^\d{1,2}[.)]?$/.test(String(x||"").trim()),num=x=>parseInt(String(x).trim()),startsNum=x=>/^\d{1,2}\b/.test(String(x||"").trim());
   const isHead=x=>/^(test|part|section|listening|reading|writing|questions?)\b/i.test(String(x||"").trim());
   for(let i=0;i<lines.length;i++){const L=lines[i].trim();if(!L)continue;
@@ -1734,13 +1738,19 @@ function analyseBook(pages){
   const T={};const isKeyPage=ls=>ls.some(l=>/answer keys?/i.test(l));
   let keyStart=-1;for(let p=Math.floor(pages.length*0.4);p<pages.length;p++){if(isKeyPage(pages[p])&&pages[p].some(l=>/listening/i.test(l))){keyStart=p;break}}
   const qEnd=keyStart>0?keyStart:pages.length;
+  /* v3.7: tìm trang bắt đầu của Nghe / Đọc / Viết / Nói cho từng Test (nếu PDF có chữ) */
+  const find=fn=>{const r=[];for(let p=0;p<qEnd;p++){const ls=pages[p]||[];if(fn(ls,ls.join(" ")))r.push(p+1)}return r};
+  const Ls=find((ls,j)=>/\blistening\b/i.test(j)&&/\b(part|section)\s*1\b/i.test(j)),Rs=find((ls,j)=>/reading passage 1\b/i.test(j)),Ws=find((ls,j)=>/writing task 1\b/i.test(j)),Ss=find((ls,j)=>/\bspeaking\b/i.test(j)&&/\bpart\s*1\b/i.test(j));
+  const dedup=a=>a.filter((x,i)=>!i||x>a[i-1]+2).slice(0,4);const L4=dedup(Ls),R4=dedup(Rs),W4=dedup(Ws),S4=dedup(Ss);
+  const starts=[...L4,...R4,...W4,...S4].sort((a,b)=>a-b),endOf=x=>{const nx=starts.find(y=>y>x);return nx?nx-1:Math.min(x+3,qEnd)};
   for(let n=1;n<=4;n++){const st=pages.slice(0,qEnd).findIndex(ls=>ls.slice(0,12).some(l=>new RegExp("^test\\s*"+n+"\\b","i").test(l))&&ls.some(l=>/^listening\b/i.test(l))&&ls.some(l=>/part\s*1\b|section\s*1\b/i.test(l)));
     let en=-1;if(st>=0){for(let p=st+1;p<qEnd;p++){if(pages[p].slice(0,12).some(l=>/^reading\b/i.test(l)||/reading passage 1/i.test(l))){en=p-1;break}}if(en<0)en=Math.min(st+5,qEnd-1)}
-    T[n]={pages:st>=0?[st+1,en+1]:[0,0],key:[]}}
+    const pr=x=>x?[x,endOf(x)]:[0,0];
+    T[n]={pages:st>=0?[st+1,en+1]:pr(L4[n-1]),key:[],rkey:[],rpages:pr(R4[n-1]),wpages:pr(W4[n-1]),spages:pr(S4[n-1])}}
   if(keyStart>=0){const all=[];for(let p=keyStart;p<Math.min(pages.length,keyStart+12);p++)all.push(...pages[p]);
-    let cur=0,inL=false;const seg={1:[],2:[],3:[],4:[]};
-    all.forEach(l=>{let m=l.length<70&&l.match(/(?:^|\b)test\s*([1-4])\b/i);if(m){cur=+m[1];inL=/listening/i.test(l);return}if(/^listening\b/i.test(l)){inL=true;return}if((/^reading\b/i.test(l)||/^writing\b/i.test(l))&&(!cur||seg[cur].length)){inL=false;return}if(cur&&inL)seg[cur].push(l)});
-    for(let n=1;n<=4;n++)T[n].key=parseKeyLines(seg[n])}
+    let cur=0,inL=false;const seg={1:[],2:[],3:[],4:[]},segAll={1:[],2:[],3:[],4:[]};
+    all.forEach(l=>{let m=l.length<70&&l.match(/(?:^|\b)test\s*([1-4])\b/i);if(m){cur=+m[1];inL=/listening/i.test(l);return}if(cur)segAll[cur].push(l);if(/^listening\b/i.test(l)){inL=true;return}if((/^reading\b/i.test(l)||/^writing\b/i.test(l))&&(!cur||seg[cur].length)){inL=false;return}if(cur&&inL)seg[cur].push(l)});
+    for(let n=1;n<=4;n++){T[n].key=parseKeyLines(seg[n]);T[n].rkey=parseKeyLines(segAll[n],2)}}
   return T}
 /* đọc chữ trong file Word (.docx) hoặc .txt – dùng cho file đáp án */
 async function docxLines(file){if(/\.txt$/i.test(file.name))return (await file.text()).split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
@@ -1749,7 +1759,7 @@ async function docxLines(file){if(/\.txt$/i.test(file.name))return (await file.t
   xml.split(/<\/w:p>/).forEach(p=>{const cells=p.split(/<\/w:tc>/);const t=p.replace(/<w:tab\/>/g," ").replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/\s+/g," ").trim();if(t)out.push(t)});return out}
 function audioSlot(name){const s=name.toLowerCase();let m=s.match(/test\s*_?0?([1-4])\D{0,12}?(?:part|section|sec|p)\s*_?0?([1-4])/);if(m)return m[1]+"-"+m[2];m=s.match(/\bt\s*0?([1-4])\s*[-_ ]?\s*p\s*0?([1-4])\b/);if(m)return m[1]+"-"+m[2];m=s.match(/(?:^|\D)([1-4])[-_. ]([1-4])(?:\D|$)/);if(m)return m[1]+"-"+m[2];return null}
 function bookList(){return S.books||[]}
-function bookNext(){const have=myBookFiles();for(const b of bookList()){if(!have.includes(b.n))continue;const pr=(S.bookProg||{})[b.n]||{t:1,p:1};if(pr.t<=4)return {b,t:pr.t,p:pr.p}}return null}
+function bookNext(){const have=myBookFiles();const L=bookList().slice().sort((a,b)=>(a.n===S.bookCur?-1:0)-(b.n===S.bookCur?-1:0));for(const b of L){if(!have.includes(b.n))continue;const pr=(S.bookProg||{})[b.n]||{t:1,p:1};if(pr.t<=4)return {b,t:pr.t,p:pr.p}}return null}
 async function renderBookImport(){
   main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">📗 Nhập sách Cambridge</h2><button class="btn ghost small" id="bk">← Bố mẹ</button></div>
   <div class="panel"><p class="small">Chọn file sách <b>có bản quyền</b> trên máy này. Sách được lưu <b>trong bộ nhớ của app trên máy này</b>, không gửi lên mạng hay GitHub. Máy nào con dùng thì nhập trên máy đó.</p>
@@ -1800,13 +1810,18 @@ function bookReview(n,pdf,files,T,map){
     ${T[t].pages[0]?"":`<p class="small" style="color:var(--rose);margin:0 0 4px">App chưa tự tìm được trang đề (file PDF có thể là bản scan ảnh). Mở file PDF, xem <b>số trang</b> phần Listening của Test ${t} (thường 4–5 trang, bắt đầu từ trang có "Test ${t} – Listening – Part 1") rồi gõ vào 2 ô dưới.</p>`}<label class="small">Trang đề Listening (số trang trong file PDF): từ <input type="number" id="pf${t}" value="${T[t].pages[0]||""}" style="max-width:80px"> đến <input type="number" id="pt${t}" value="${T[t].pages[1]||""}" style="max-width:80px"></label>
     <p class="small" style="margin:8px 0 4px">Đáp án Listening: <b style="color:${T[t].key.length>=38?"var(--good)":"var(--rose)"}">${T[t].key.length}/40 câu</b> đọc được. Mỗi dòng: <code>số câu  đáp án</code>.</p>
     <textarea id="k${t}" style="min-height:110px;font-family:monospace">${esc(T[t].key.map(k=>k.q+" "+k.a+(k.g?" #"+k.g:"")).join("\n"))}</textarea>
-    ${[1,2,3,4].map(p=>`<label class="small" style="display:block;margin-top:4px">Audio Part ${p}: <select id="a${t}-${p}">${opt(map[t+"-"+p])}</select></label>`).join("")}</div>`).join("")}
+    ${[1,2,3,4].map(p=>`<label class="small" style="display:block;margin-top:4px">Audio Part ${p}: <select id="a${t}-${p}">${opt(map[t+"-"+p])}</select></label>`).join("")}
+    <p class="small" style="margin:10px 0 4px">Đáp án Reading: <b style="color:${(T[t].rkey||[]).length>=38?"var(--good)":"var(--rose)"}">${(T[t].rkey||[]).length}/40 câu</b> đọc được (để trống nếu sách không có).</p>
+    <textarea id="rk${t}" style="min-height:80px;font-family:monospace">${esc((T[t].rkey||[]).map(k=>k.q+" "+k.a+(k.g?" #"+k.g:"")).join("\n"))}</textarea>
+    <p class="small" style="margin:8px 0 2px">Trang bắt đầu (số trang trong file PDF, để trống nếu chưa biết – sửa sau được):</p><div class="row small" style="gap:6px">Đọc <input type="number" id="rf${t}" value="${(T[t].rpages||[])[0]||""}" style="max-width:80px"> Viết <input type="number" id="wf${t}" value="${(T[t].wpages||[])[0]||""}" style="max-width:80px"> Nói <input type="number" id="sf${t}" value="${(T[t].spages||[])[0]||""}" style="max-width:80px"></div></div>`).join("")}
   <div class="row"><button class="btn teal" id="bkSave">Lưu sách vào app</button></div><p class="small muted" id="bkMsg"></p>`;
   $("#bk").onclick=()=>renderBookImport();
   $("#bkSave").onclick=async()=>{const msg=$("#bkMsg"),b={n,added:dayKey(),tests:{}};
     for(let t=1;t<=4;t++){const key=parseKeyLines($("#k"+t).value.split(/\n/).map(l=>l.replace(/\s+#(\S+)$/,"")));
       $("#k"+t).value.split(/\n/).forEach(l=>{const m=l.match(/^(\d{1,2})\s.*#(\S+)$/);if(m){const k=key.find(x=>x.q===+m[1]);if(k)k.g=m[2]}});
-      b.tests[t]={pages:[+$("#pf"+t).value||0,+$("#pt"+t).value||0],key,audio:{}};
+      const rkey=parseKeyLines($("#rk"+t).value.split(/\n/).map(l=>l.replace(/\s+#(\S+)$/,"")));$("#rk"+t).value.split(/\n/).forEach(l=>{const m=l.match(/^(\d{1,2})\s.*#(\S+)$/);if(m){const k=rkey.find(x=>x.q===+m[1]);if(k)k.g=m[2]}});
+      const old=(bookList().find(x=>x.n===n)||{tests:{}}).tests[t]||{},pg=(id,ov)=>{const a=+$("#"+id+t).value||0;return a?[a,ov&&ov[0]===a?ov[1]:0]:(ov||[0,0])};
+      b.tests[t]=Object.assign({},old,{pages:(+$("#pf"+t).value||0)?[+$("#pf"+t).value||0,+$("#pt"+t).value||0]:(old.pages||[0,0]),key,audio:{},rkey:rkey.length?rkey:(old.rkey||[]),rpages:pg("rf",T[t].rpages&&T[t].rpages[0]===+$("#rf"+t).value?T[t].rpages:old.rpages),wpages:pg("wf",T[t].wpages&&T[t].wpages[0]===+$("#wf"+t).value?T[t].wpages:old.wpages),spages:pg("sf",T[t].spages&&T[t].spages[0]===+$("#sf"+t).value?T[t].spages:old.spages)});
       if(key.length<10){toast(`Test ${t}: mới có ${key.length} đáp án. Kiểm tra lại ô đáp án nhé.`);return}}
     const keep=f=>f&&f._k?{ref:f._k,name:f.name,type:f.type,size:f.size}:f;
     try{try{navigator.storage&&navigator.storage.persist&&await navigator.storage.persist()}catch(e){}
@@ -1814,9 +1829,46 @@ function bookReview(n,pdf,files,T,map){
       for(let t=1;t<=4;t++)for(let p=1;p<=4;p++){const v=$(`#a${t}-${p}`).value;if(v!==""){msg.textContent=`Đang lưu audio Test ${t} Part ${p}…`;await bPut(`b${n}-a-${t}-${p}`,keep(files[+v]));b.tests[t].audio[p]=1}}
     }catch(e){let est="";try{const q=await navigator.storage.estimate();est=` Đã dùng ${Math.round(q.usage/1e6)} MB / cho phép ${Math.round(q.quota/1e6)} MB.`}catch(_){}
       msg.innerHTML="Máy không đủ chỗ lưu hoặc trình duyệt chặn lưu ("+esc(String(e&&e.name||e).slice(0,40))+")."+esc(est)+" Kiểm tra: <b>Táo  → Giới thiệu về máy Mac → Dung lượng</b> phải còn trống vài GB. Giải phóng xong bấm Lưu lại.";return}
-    S.books=bookList().filter(x=>x.n!==n).concat([b]).sort((a,c)=>a.n-c.n);S.bookProg=S.bookProg||{};if(!S.bookProg[n])S.bookProg[n]={t:1,p:1};setBookFiles(myBookFiles().concat([n]));save();syncSoon();cleanTmp();
+    fixEnds(b);b.editedAt=Date.now();S.books=bookList().filter(x=>x.n!==n).concat([b]).sort((a,c)=>a.n-c.n);S.bookProg=S.bookProg||{};if(!S.bookProg[n])S.bookProg[n]={t:1,p:1};setBookFiles(myBookFiles().concat([n]));save();syncSoon();cleanTmp();
     toast(`Đã lưu Cambridge ${n}. Con sẽ thấy ở Bước 4.`);if(window._bkZip||window._bkDirF)renderBookImport();else renderParent()}}
-function bookPanel(){const L=bookList();return `<div class="panel"><h3 style="margin-top:0">📗 Sách Cambridge của nhà</h3>${L.length?`<p class="small">${L.map(b=>{const pr=(S.bookProg||{})[b.n]||{t:1,p:1};return `Cambridge ${b.n}: ${pr.t>4?"đã làm hết":`đang ở Test ${pr.t} Part ${pr.p}`}${myBookFiles().includes(b.n)?"":" (chưa có trên máy này – mở app trên máy kia, để 2 máy cạnh nhau cùng Wi-Fi là tự chuyển sang)"}`}).join(" · ")}</p>`:`<p class="small muted">Có sách Cambridge bản quyền (PDF + MP3) trên máy này? Nhập vào để con luyện và app tự chấm.</p>`}<button class="btn small teal" id="bkImp">Nhập sách</button></div>`}
+function bookPanel(){const L=bookList();return `<div class="panel"><h3 style="margin-top:0">📗 Sách Cambridge của nhà</h3>${L.length?`<p class="small" style="margin:0 0 6px">Bấm vào sách để <b>chọn học sách đó</b>, <b>học lại</b>, chọn Test/Part hoặc <b>sửa số trang đề</b>.</p><div class="row" style="gap:6px;margin-bottom:8px">${L.map(b=>{const pr=(S.bookProg||{})[b.n]||{t:1,p:1},cur=bookNext()&&bookNext().b.n===b.n;return `<button class="btn small ${cur?"teal":"ghost"}" data-bkm="${b.n}" title="${myBookFiles().includes(b.n)?"":"chưa có file trên máy này"}">${cur?"▶ ":""}Cam ${b.n} · ${pr.t>4?"xong":`T${pr.t} P${pr.p}`}${myBookFiles().includes(b.n)?"":" ⏳"}</button>`}).join("")}</div>${L.some(b=>!myBookFiles().includes(b.n))?`<p class="small muted" style="margin:0 0 6px">⏳ = chưa có trên máy này – để 2 máy cạnh nhau cùng Wi-Fi, mở app cả hai là tự chuyển sang.</p>`:""}`:`<p class="small muted">Có sách Cambridge bản quyền (PDF + MP3) trên máy này? Nhập vào để con luyện và app tự chấm.</p>`}<button class="btn small teal" id="bkImp">Nhập sách</button></div>`}
+/* v3.6.9: quản lý từng sách – chọn học, học lại, nhảy Test/Part, sửa số trang đề */
+function bookManage(n){const b=bookList().find(x=>x.n===n);if(!b)return renderParent();const pr=(S.bookProg||{})[n]||{t:1,p:1},has=myBookFiles().includes(n);
+  main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">📗 Cambridge ${n}</h2><button class="btn ghost small" id="bk">← Bố mẹ</button></div>
+  <div class="panel"><p class="small" style="margin:0 0 8px">Tiến độ: <b>${pr.t>4?"đã làm hết 4 Test":`đang ở Test ${pr.t} · Part ${pr.p}`}</b>${S.bookCur===n?" · <b>đang được chọn học</b>":""}${has?"":" · <span style='color:var(--rose)'>máy này chưa có file sách</span>"}</p>
+   <div class="row" style="gap:8px"><button class="btn small teal" id="bmPick">▶ Chọn học sách này (Bước 4)</button><button class="btn small ghost" id="bmRedo">↺ Học lại từ đầu</button></div>
+   <label class="f">Hoặc học từ chỗ khác:</label><div class="row" style="gap:8px">Test <select id="bmT" style="width:auto">${[1,2,3,4].map(t=>`<option ${t===Math.min(pr.t,4)?"selected":""}>${t}</option>`).join("")}</select> Part <select id="bmP" style="width:auto">${[1,2,3,4].map(q=>`<option ${q===pr.p?"selected":""}>${q}</option>`).join("")}</select><button class="btn small ghost" id="bmGo">Học từ đây</button></div></div>
+  <div class="panel"><h3 style="margin-top:0">Số trang đề trong file PDF</h3><p class="small muted" style="margin:0 0 6px">Số trang <b>của file PDF</b> (không phải số in trên giấy). Chỉ cần ô <b>từ</b> – ô <b>đến</b> để trống app tự tính. Dễ nhất: bấm <b>🖼 Chọn trang bằng hình</b> rồi bấm vào trang đầu mỗi phần.</p>
+   <div class="scroll"><table class="t"><tr><th></th>${SEC.map(([,lb])=>`<th>${lb} (từ – đến)</th>`).join("")}</tr>${[1,2,3,4].map(t=>{const T=b.tests[t]||{};return `<tr><th>Test ${t}</th>${SEC.map(([k])=>{const v=T[k]||[0,0];return `<td style="white-space:nowrap"><input type="number" id="m-${k}-${t}" value="${v[0]||""}" style="width:64px;padding:6px"> – <input type="number" id="n-${k}-${t}" value="${v[1]||""}" style="width:64px;padding:6px"></td>`}).join("")}</tr>`}).join("")}</table></div>
+   <label class="f">Câu hỏi của 3 bài đọc (mặc định 1–13, 14–26, 27–40)</label><div class="row small" style="gap:6px">${[1,2,3,4].map(t=>`Test ${t} <input type="text" id="rr${t}" value="${rRanges(b.tests[t]||{}).map(x=>x.join("-")).join(", ")}" style="width:150px;padding:6px">`).join(" ")}</div>
+   <div class="row" style="gap:8px;margin-top:8px"><button class="btn small teal" id="bmPages">Lưu số trang</button><button class="btn small ghost" id="bmThumb">🖼 Chọn trang bằng hình</button></div>
+   <p class="small muted" style="margin:8px 0 0">Đọc: ${(()=>{const r=(S.bookRProg||{})[n]||{t:1,p:1};return r.t>4?"đã làm hết":`đang ở Test ${r.t} · Passage ${r.p}`})()} · Đáp án Reading: ${[1,2,3,4].map(t=>((b.tests[t]||{}).rkey||[]).length).join("/")} câu${[1,2,3,4].some(t=>((b.tests[t]||{}).rkey||[]).length<10)?` – <span style="color:var(--rose)">thiếu đáp án Reading: nhập lại sách này (Nhập sách → chọn file → Cambridge ${n}) để app đọc thêm, tiến độ vẫn giữ nguyên</span>`:""}.</p>
+   <div class="row" style="gap:8px;margin-top:6px"><button class="btn small ghost" id="bmRRedo">↺ Đọc lại từ đầu</button></div>
+   <div id="bmThumbs"></div></div><p class="small muted" id="bmMsg"></p>`;
+  const done=t=>{S.bookCur=n;S.bookCurAt=Date.now();save();syncSoon();toast(t);bookManage(n)};
+  $("#bk").onclick=()=>renderParent();
+  $("#bmPick").onclick=()=>done(`Bước 4 sẽ dùng Cambridge ${n}.`);
+  $("#bmRedo").onclick=()=>{if(!confirm(`Học lại Cambridge ${n} từ Test 1 Part 1? (Kết quả cũ vẫn giữ trong lịch sử)`))return;S.bookProg=S.bookProg||{};S.bookProg[n]={t:1,p:1,at:Date.now()};done(`Cambridge ${n} học lại từ Test 1 Part 1.`)};
+  $("#bmGo").onclick=()=>{S.bookProg=S.bookProg||{};S.bookProg[n]={t:+$("#bmT").value,p:+$("#bmP").value,at:Date.now()};done(`Cambridge ${n}: học từ Test ${$("#bmT").value} Part ${$("#bmP").value}.`)};
+  const readPages=()=>{for(let t=1;t<=4;t++){b.tests[t]=b.tests[t]||{key:[],audio:{}};SEC.forEach(([k])=>{const a=+$(`#m-${k}-${t}`).value||0,z=+$(`#n-${k}-${t}`).value||0;b.tests[t][k]=[a,a&&z>=a?z:0]});
+      const rr=$("#rr"+t).value.split(/[,;]/).map(x=>x.split(/[-–]/).map(Number)).filter(x=>x.length===2&&x[0]>=1&&x[1]>=x[0]&&x[1]<=40);if(rr.length===3)b.tests[t].rr=rr}fixEnds(b);b.editedAt=Date.now();save();syncSoon()};
+  $("#bmPages").onclick=()=>{readPages();toast("Đã lưu số trang đề.");bookManage(n)};
+  $("#bmRRedo").onclick=()=>{if(!confirm(`Làm lại phần Đọc của Cambridge ${n} từ Test 1 Passage 1?`))return;S.bookRProg=S.bookRProg||{};S.bookRProg[n]={t:1,p:1,at:Date.now()};done(`Phần Đọc Cambridge ${n} làm lại từ đầu.`)};
+  $("#bmThumb").onclick=()=>bookThumbs(b,$("#bmThumbs"))}
+/* lưới hình thu nhỏ các trang PDF – bấm trang để đánh dấu "trang đầu" của Nghe/Đọc/Viết/Nói từng Test */
+async function bookThumbs(b,box){if(!box)return;const pdf=await bGet(`b${b.n}-pdf`);if(!pdf){box.innerHTML=`<p class="small" style="color:var(--rose)">Máy này chưa có file PDF của sách.</p>`;return}
+  box.innerHTML=`<p class="small" style="margin:10px 0 6px"><b>Bấm vào trang đầu tiên của từng phần</b> rồi chọn nó là phần nào. Kéo xuống để xem thêm trang (hình hiện dần).</p><div id="thG" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px"></div>`;
+  const lib=await loadPdfJs(),doc=await openPdf(lib,pdf),G=$("#thG"),N=doc.numPages,mark={};
+  for(let t=1;t<=4;t++)SEC.forEach(([k,lb])=>{const a=((b.tests[t]||{})[k]||[])[0];if(a)mark[a]=(mark[a]||[]).concat([`T${t} ${lb}`])});
+  G.innerHTML=Array.from({length:N},(_,i)=>`<button class="th" data-pg="${i+1}" style="border:2px solid ${mark[i+1]?"var(--teal)":"var(--line)"};border-radius:8px;background:#fff;padding:2px;cursor:pointer;min-height:140px;position:relative"><span class="small" style="position:absolute;top:2px;left:4px;background:var(--ink);color:var(--paper);border-radius:6px;padding:0 5px">${i+1}</span>${mark[i+1]?`<span class="small" style="position:absolute;bottom:2px;left:2px;right:2px;background:var(--teal);color:var(--on-teal);border-radius:6px">${mark[i+1].join(", ")}</span>`:""}</button>`).join("");
+  const draw=async el=>{if(el._d)return;el._d=1;try{const page=await doc.getPage(+el.dataset.pg),vp0=page.getViewport({scale:1}),vp=page.getViewport({scale:200/vp0.width});const cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;cv.style.width="100%";el.insertBefore(cv,el.firstChild);await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;page.cleanup()}catch(e){}};
+  const io="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);draw(e.target)}}),{rootMargin:"300px"}):null;
+  G.querySelectorAll(".th").forEach(el=>{io?io.observe(el):draw(el);el.onclick=async()=>{const pg=+el.dataset.pg;
+    const opts=[];for(let t=1;t<=4;t++)SEC.forEach(([k,lb])=>opts.push({label:`T${t} ${lb}`,cls:"ghost small",t,k}));opts.push({label:"Bỏ",cls:"small"});
+    const r=await modal(`<h3>Trang ${pg} là trang đầu của phần nào?</h3>`,opts.map(o=>({label:o.label,cls:o.cls})));const o=opts[r.i];if(!o||!o.k)return;
+    b.tests[o.t]=b.tests[o.t]||{key:[],audio:{}};b.tests[o.t][o.k]=[pg,0];fixEnds(b);b.editedAt=Date.now();save();syncSoon();const lb=`T${o.t} ${SEC.find(x=>x[0]===o.k)[1]}`;toast(`Đã đánh dấu trang ${pg}: ${lb}`);
+    for(let t=1;t<=4;t++)SEC.forEach(([k])=>{const v=(b.tests[t]||{})[k]||[0,0],x=$(`#m-${k}-${t}`),y=$(`#n-${k}-${t}`);if(x)x.value=v[0]||"";if(y)y.value=v[1]||""});
+    el.style.borderColor="var(--teal)";let tag=el.querySelector(".tg");if(!tag){tag=document.createElement("span");tag.className="small tg";tag.style.cssText="position:absolute;bottom:2px;left:2px;right:2px;background:var(--teal);color:var(--on-teal);border-radius:6px";el.appendChild(tag)}tag.textContent=(tag.textContent?tag.textContent+", ":"")+lb}})}
 async function bookRoom(o){
   const {b,t,p}=o,T=b.tests[t],first=(p-1)*10+1,desk=innerWidth>=900;
   if(!(session&&session.type==="listening"))beginSession("listening");if(desk)main.style.maxWidth="min(1400px,96vw)";
@@ -1834,7 +1886,7 @@ async function bookRoom(o){
     try{audio&&audio.pause()}catch(e){}session&&(session.listening=false);
     const key=T.key.filter(k=>k.q>=first&&k.q<=first+9);if(!key.length){toast("Sách chưa có đáp án Part này – bố mẹ kiểm tra lại ở mục Nhập sách.");return}
     const byQ=Array.from({length:10},(_,k)=>A[k]);const r=localGrade({answers:key},key.map(k=>byQ[k.q-first]||""));
-    officialReasons({id:`b${b.n}-${t}-${p}`,label:`Cambridge ${b.n} · Test ${t} · Part ${p}`},r,()=>{const pr=S.bookProg[b.n]||{t:1,p:1};pr.p++;if(pr.p>4){pr.p=1;pr.t++}S.bookProg[b.n]=pr;save()})};
+    officialReasons({id:`b${b.n}-${t}-${p}`,label:`Cambridge ${b.n} · Test ${t} · Part ${p}`},r,()=>{const pr=Object.assign({t:1,p:1},S.bookProg[b.n]);pr.p++;if(pr.p>4){pr.p=1;pr.t++}pr.at=Date.now();S.bookProg[b.n]=pr;save()})};
   try{const pdf=await bGet(`b${b.n}-pdf`);if(!pdf)throw "nopdf";const lib=await loadPdfJs(),doc=await openPdf(lib,pdf);
     const v=$("#bkView");if(!v)return;v.innerHTML="";const [a,z]=T.pages;const from=Math.max(1,a||1),to=Math.min(doc.numPages,z||from+3);
     for(let pg=from;pg<=to;pg++){const page=await doc.getPage(pg),w=(v.clientWidth||360)-4,vp0=page.getViewport({scale:1}),sc=w/vp0.width*(window.devicePixelRatio||1),vp=page.getViewport({scale:sc});
@@ -1842,6 +1894,61 @@ async function bookRoom(o){
   }catch(e){const v=$("#bkView");if(v)v.innerHTML=`<p class="small" style="padding:10px;color:#333">Không mở được trang đề (${esc(String(e).slice(0,40))}). Con mở sách Cambridge ${b.n}, Test ${t}, Part ${p} ở trang ${T.pages[0]||"?"} để đọc câu hỏi.</p>`}
 }
 
+
+/* ===== v3.7: sách Cambridge đủ 4 kỹ năng ===== */
+const SEC=[["pages","Nghe"],["rpages","Đọc"],["wpages","Viết"],["spages","Nói"]];
+function fixEnds(b){const st=[];for(let t=1;t<=4;t++){const T=b.tests[t]||{};SEC.forEach(([k])=>{const a=(T[k]||[])[0];if(a)st.push(a)})}st.sort((x,y)=>x-y);
+  for(let t=1;t<=4;t++){const T=b.tests[t];if(!T)continue;SEC.forEach(([k])=>{const v=T[k];if(v&&v[0]&&!(v[1]>=v[0])){const nx=st.find(y=>y>v[0]);T[k]=[v[0],nx?Math.min(nx-1,v[0]+(k==="rpages"?16:8)):v[0]+(k==="rpages"?12:3)]}})}}
+const RR_DEF=[[1,13],[14,26],[27,40]];
+function rRanges(T){return (T.rr&&T.rr.length===3)?T.rr:RR_DEF}
+function bookRNext(){const have=myBookFiles();const L=bookList().slice().sort((a,b)=>(a.n===S.bookCur?-1:0)-(b.n===S.bookCur?-1:0));
+  for(const b of L){if(!have.includes(b.n))continue;const pr=(S.bookRProg||{})[b.n]||{t:1,p:1};if(pr.t>4)continue;const T=b.tests[pr.t]||{};if((T.rkey||[]).length>=10)return {b,t:pr.t,p:pr.p}}return null}
+async function pdfInto(v,b,pages,note){try{const pdf=await bGet(`b${b.n}-pdf`);if(!pdf)throw "nopdf";const lib=await loadPdfJs(),doc=await openPdf(lib,pdf);
+    if(!v)return;v.innerHTML="";const [a,z]=pages||[0,0];if(!a){v.innerHTML=`<p class="small" style="padding:10px;color:#333">Bố mẹ chưa điền số trang cho phần này (Bố mẹ → bấm vào sách → Số trang đề). Con mở sách giấy/PDF ${esc(note||"")} để xem đề nhé.</p>`;return}
+    const from=Math.max(1,a),to=Math.min(doc.numPages,Math.max(from,z||from+3));
+    for(let pg=from;pg<=to;pg++){if(!document.body.contains(v))return;const page=await doc.getPage(pg),w=(v.clientWidth||360)-4,vp0=page.getViewport({scale:1}),sc=w/vp0.width*(window.devicePixelRatio||1),vp=page.getViewport({scale:sc});
+      const cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;cv.style.width="100%";cv.style.display="block";cv.style.borderBottom="1px solid #ddd";v.appendChild(cv);await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;page.cleanup()}
+  }catch(e){if(v)v.innerHTML=`<p class="small" style="padding:10px;color:#333">Không mở được trang đề (${esc(String(e).slice(0,40))}). Con mở sách ${esc(note||"")} để xem đề.</p>`}}
+const READ_ERR=["Không tìm được chỗ trong bài","Hiểu sai câu hỏi / từ khoá","Nhầm TRUE / FALSE / NOT GIVEN","Không biết từ đó","Hết giờ, làm vội"];
+Object.assign(CAM_TIP,{"Không tìm được chỗ trong bài":"Gạch chân từ khoá trong câu hỏi, tìm từ đồng nghĩa trong bài; câu hỏi thường theo thứ tự đoạn văn.","Hiểu sai câu hỏi / từ khoá":"Đọc chậm câu hỏi, chú ý các từ only / all / never / most.","Nhầm TRUE / FALSE / NOT GIVEN":"FALSE = bài nói ngược lại; NOT GIVEN = bài không nhắc tới. Đừng dùng hiểu biết riêng.","Hết giờ, làm vội":"Mỗi bài đọc 20 phút: đọc lướt 2–3 phút, rồi làm câu hỏi; câu khó để sau."});
+async function startBookReading(){const o=bookRNext();if(!o){toast("Chưa có sách có đáp án Reading – bố mẹ nhập lại sách (Bố mẹ → Nhập sách).");return renderHome()}
+  const {b,t,p}=o,T=b.tests[t],[a,z]=rRanges(T)[p-1],N=z-a+1,desk=innerWidth>=900;
+  beginSession("reading");if(desk)main.style.maxWidth="min(1400px,96vw)";
+  main.innerHTML=`${sessionHead(`Cambridge ${b.n} · Test ${t} · Reading Passage ${p}`)}<div style="display:${desk?"grid":"block"};grid-template-columns:62% 1fr;gap:12px;align-items:start">
+   <div id="bkView" style="height:${desk?"74vh":"55vh"};overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff"><p class="small" style="padding:10px;color:#333">Đang mở đề…</p></div>
+   <div class="panel" style="margin:${desk?"0":"12px 0 0"};max-height:${desk?"74vh":"none"};overflow:auto">
+    <ol class="small" style="margin:0 0 8px;padding-left:18px"><li>Tìm <b>Reading Passage ${p}</b> (câu ${a}–${z}) trong khung đề.</li><li>Làm trong khoảng <b>20 phút</b> như thi thật.</li><li>Gõ đáp án vào ô, nộp bài – cô chấm theo đáp án của sách.</li></ol>
+    ${Array.from({length:N},(_,k)=>`<div class="q" style="display:flex;gap:8px;align-items:center;margin:4px 0"><span class="qn">${a+k}</span><input type="text" id="rq${k}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`).join("")}
+    <button class="btn teal" id="rqDone" style="width:100%;justify-content:center;margin-top:8px">Nộp bài</button></div></div>`;
+  bindQuit();say(`Cambridge ${b.n}, test ${t}, reading passage ${p}. You have about twenty minutes.`,`Cambridge ${b.n}, Test ${t}, bài đọc ${p}: con có khoảng 20 phút nhé.`);
+  $("#rqDone").onclick=()=>{const A=Array.from({length:N},(_,k)=>$("#rq"+k).value.trim());if(A.filter(Boolean).length<Math.min(5,N)){toast("Con mới gõ "+A.filter(Boolean).length+" câu – làm thêm rồi nộp nhé.");return}
+    const key=(T.rkey||[]).filter(k=>k.q>=a&&k.q<=z);if(!key.length){toast("Sách chưa có đáp án cho bài đọc này – bố mẹ kiểm tra lại.");return}
+    const r=localGrade({answers:key},key.map(k=>A[k.q-a]||""));
+    officialReasons({id:`br${b.n}-${t}-${p}`,label:`Cambridge ${b.n} · Test ${t} · Reading Passage ${p}`,kind:"camR",err:READ_ERR,hint:"VD: tìm thấy từ 'rarely' nhưng tưởng là 'never'"},r,()=>{const pr=Object.assign({t:1,p:1},(S.bookRProg||{})[b.n]);pr.p++;if(pr.p>3){pr.p=1;pr.t++}pr.at=Date.now();S.bookRProg=S.bookRProg||{};S.bookRProg[b.n]=pr;save()})};
+  pdfInto($("#bkView"),b,T.rpages,`Cambridge ${b.n}, Test ${t}, Reading Passage ${p}`)}
+/* Viết / Nói theo sách: lấy đề từ trang PDF (bản scan) bằng AI một lần, lưu lại cho lần sau */
+function bookWSPick(kind){const have=myBookFiles(),k=kind==="w"?"wpages":"spages",done=S.bookWS||{};
+  for(const b of bookList().slice().sort((x,y)=>(x.n===S.bookCur?-1:0)-(y.n===S.bookCur?-1:0))){if(!have.includes(b.n))continue;for(let t=1;t<=4;t++){const T=b.tests[t]||{};if(!(T[k]||[])[0])continue;
+    if(kind==="w"){for(const task of [1,2])if(!done[`w${b.n}-${t}-${task}`])return {b,t,task}}else if(!done[`s${b.n}-${t}`])return {b,t}}}return null}
+async function pageImages(b,pages,max){const pdf=await bGet(`b${b.n}-pdf`);if(!pdf)return [];const lib=await loadPdfJs(),doc=await openPdf(lib,pdf),out=[];
+  for(let pg=pages[0];pg<=Math.min(pages[1]||pages[0],pages[0]+(max||2)-1,doc.numPages);pg++){const page=await doc.getPage(pg),vp0=page.getViewport({scale:1}),vp=page.getViewport({scale:1100/vp0.width});
+    const cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;out.push(cv.toDataURL("image/jpeg",.8));page.cleanup()}return out}
+async function bookWriting(){const o=bookWSPick("w");if(!o){toast("Chưa có đề Viết từ sách (bố mẹ điền số trang Viết trong mục sách) – cô cho đề luyện của app.");return startWriting()}
+  const {b,t,task}=o,T=b.tests[t];T.wtask=T.wtask||{};
+  if(!T.wtask[task]){if(!aiOK()){toast("Cần khoá AI để đọc đề Viết trong sách và chấm bài – bố mẹ cài ở Cài đặt.");return startWriting()}
+    loading("Cô đang đọc đề Viết trong sách");try{const imgs=await pageImages(b,T.wpages,2),sample=await getSample();
+      const content=imgs.map(u=>({type:"image",source:{type:"base64",media_type:"image/jpeg",data:u.slice(u.indexOf(",")+1)}}));
+      content.push({type:"text",text:`These pages are the Writing section of an IELTS practice test from a book the family owns. Transcribe Writing Task ${task} for the student's private practice. ${task===1?"Give the task instructions, then describe the visual (chart/table/map/diagram) completely in text: title, axes/labels, every category and every number shown, so the task can be answered without the picture.":"Give the full task instructions exactly."} Reply with JSON only: {"prompt":"..."}`});
+      const r=await sample.json([{role:"user",content}],{modelTier:"default"});if(!r||!r.prompt)throw "no";T.wtask[task]=String(r.prompt);b.editedAt=Date.now();save()}catch(e){toast("Chưa đọc được đề trong sách – cô cho đề luyện của app.");return startWriting()}}
+  startWriting({task:{task,min:task===1?150:250,mins:task===1?20:40,prompt:`[Cambridge ${b.n} · Test ${t} · Writing Task ${task}] `+T.wtask[task]},onDone:res=>{S.bookWS=S.bookWS||{};S.bookWS[`w${b.n}-${t}-${task}`]={at:Date.now()};save();finishWritingPractice(res)}})}
+async function bookSpeaking(){const o=bookWSPick("s");if(!o){toast("Chưa có đề Nói từ sách (bố mẹ điền số trang Nói trong mục sách) – cô cho câu hỏi luyện của app.");return startSpeaking()}
+  const {b,t}=o,T=b.tests[t];
+  if(!T.sq){if(!aiOK()){toast("Cần khoá AI để đọc câu hỏi Nói trong sách và nhận xét – bố mẹ cài ở Cài đặt.");return startSpeaking()}
+    loading("Cô đang đọc câu hỏi Nói trong sách");try{const imgs=await pageImages(b,T.spages,2),sample=await getSample();
+      const content=imgs.map(u=>({type:"image",source:{type:"base64",media_type:"image/jpeg",data:u.slice(u.indexOf(",")+1)}}));
+      content.push({type:"text",text:`These pages are the Speaking section of an IELTS practice test from a book the family owns. For the student's private practice, list the questions: up to 4 Part 1 questions, the Part 2 cue card (topic line plus the "You should say" points, as one item), and up to 3 Part 3 questions. Reply with JSON only: {"items":[{"part":"Part 1","q":"..."},{"part":"Part 2","q":"...","cue":true},{"part":"Part 3","q":"..."}]}`});
+      const r=await sample.json([{role:"user",content}],{modelTier:"default"});if(!r||!Array.isArray(r.items)||!r.items.length)throw "no";T.sq=r.items.slice(0,9).map(x=>({part:String(x.part||"Part 1"),q:String(x.q||""),cue:!!x.cue||/2/.test(x.part||"")}));b.editedAt=Date.now();save()}catch(e){toast("Chưa đọc được câu hỏi trong sách – cô cho câu hỏi luyện của app.");return startSpeaking()}}
+  S.bookWS=S.bookWS||{};S.bookWS[`s${b.n}-${t}`]={at:Date.now()};save();startSpeaking({items:T.sq,full:true})}
 /* v3.6: Đồng bộ 2 máy. Tiến độ học: qua Apps Script của bố mẹ (mọi lúc). Sách Cambridge (file lớn): truyền thẳng máy–máy qua Wi-Fi (WebRTC) khi 2 máy cùng mở app. */
 function devId(){let d="";try{d=localStorage.getItem("ielts-device")||""}catch(e){}if(!d){d=(/iPhone|iPad/.test(navigator.userAgent)?"iphone-":/Mac/.test(navigator.userAgent)?"mac-":"may-")+Math.random().toString(36).slice(2,8);try{localStorage.setItem("ielts-device",d)}catch(e){}}return d}
 function devName(){const u=navigator.userAgent;return /iPhone/.test(u)?"iPhone":/iPad/.test(u)?"iPad":/Mac/.test(u)?"MacBook":/Android/.test(u)?"Android":"Máy tính"}
@@ -1865,8 +1972,11 @@ function mergeState(L,R){
   if(R.firstDay&&(!L.firstDay||R.firstDay<L.firstDay))L.firstDay=R.firstDay;
   L.examPart=Math.max(L.examPart||0,R.examPart||0);
   if(R.cam&&(!L.cam||(R.cam.book*100+R.cam.test*10+R.cam.part)>(L.cam.book*100+L.cam.test*10+L.cam.part)))L.cam=R.cam;
-  L.bookProg=L.bookProg||{};Object.entries(R.bookProg||{}).forEach(([n,p])=>{const a=L.bookProg[n];if(!a||p.t*10+p.p>a.t*10+a.p)L.bookProg[n]=p});
-  const bm=new Map((L.books||[]).map(b=>[b.n,b]));(R.books||[]).forEach(b=>{const a=bm.get(b.n);const cnt=x=>Object.values(x.tests||{}).reduce((s,t)=>s+(t.key||[]).length,0);if(!a||cnt(b)>cnt(a))bm.set(b.n,Object.assign({},b,{tests:Object.fromEntries(Object.entries(b.tests||{}).map(([t,v])=>[t,Object.assign({},v,{audio:(a&&a.tests&&a.tests[t]&&a.tests[t].audio)||{}})]))}))});L.books=[...bm.values()].sort((a,b)=>a.n-b.n);
+  L.bookProg=L.bookProg||{};Object.entries(R.bookProg||{}).forEach(([n,p])=>{const a=L.bookProg[n];if(!a||((p.at||0)||(a.at||0)?(p.at||0)>(a.at||0):p.t*10+p.p>a.t*10+a.p))L.bookProg[n]=p});
+  if((R.bookCurAt||0)>(L.bookCurAt||0)){L.bookCur=R.bookCur;L.bookCurAt=R.bookCurAt}
+  L.bookRProg=L.bookRProg||{};Object.entries(R.bookRProg||{}).forEach(([n,p])=>{const a=L.bookRProg[n];if(!a||(p.at||0)>(a.at||0))L.bookRProg[n]=p});
+  L.bookWS=L.bookWS||{};Object.entries(R.bookWS||{}).forEach(([k,v])=>{if(!L.bookWS[k]||(v.at||0)>(L.bookWS[k].at||0))L.bookWS[k]=v});
+  const bm=new Map((L.books||[]).map(b=>[b.n,b]));(R.books||[]).forEach(b=>{const a=bm.get(b.n);const cnt=x=>Object.values(x.tests||{}).reduce((s,t)=>s+(t.key||[]).length+(t.rkey||[]).length,0);if(!a||cnt(b)>cnt(a)||(cnt(b)===cnt(a)&&(b.editedAt||0)>(a.editedAt||0)))bm.set(b.n,Object.assign({},b,{tests:Object.fromEntries(Object.entries(b.tests||{}).map(([t,v])=>[t,Object.assign({},v,{audio:(a&&a.tests&&a.tests[t]&&a.tests[t].audio)||{}})]))}))});L.books=[...bm.values()].sort((a,b)=>a.n-b.n);
   L.camErr=L.camErr||{};Object.entries(R.camErr||{}).forEach(([k,v])=>{L.camErr[k]=Math.max(L.camErr[k]||0,v)});
   L.flags=Object.assign({},R.flags||{},L.flags||{});
   L.wrong=Object.assign({},R.wrong||{},L.wrong||{});L.learned=Object.assign({},R.learned||{},L.learned||{});
@@ -2032,7 +2142,7 @@ function startCambridge(src){
   $("#olSheet").onclick=()=>answerSheet({online:true,name:OFFICIAL_TESTS[+tSel.value].name,part:+pSel.value});
   $("#bk").onclick=()=>startCambridge();$("#wbNOk").onclick=()=>{const n=readScore("wbN");if(n!=null)saveCam(n,true)};
 }
-function startModule(id){({vocab:startVocab,reading:()=>chooseSource("reading"),listening:()=>chooseSource("listening"),writing:()=>startWriting(),speaking:()=>startSpeaking()})[id]()}
+function startModule(id){({vocab:startVocab,reading:()=>chooseSource("reading"),listening:()=>chooseSource("listening"),writing:()=>bookWSPick("w")?bookWriting():startWriting(),speaking:()=>bookWSPick("s")?bookSpeaking():startSpeaking()})[id]()}
 
 /* ============ AI helpers ============ */
 let sampleFn;
@@ -2563,7 +2673,7 @@ async function renderParent(){
   <p>Một trang web không có quyền khoá ứng dụng khác trên điện thoại, nên phần này cần dùng công cụ kiểm soát của hệ điều hành:</p>
   <p><b>Android:</b> cài <b>Google Family Link</b> trên máy bố mẹ và máy con. Đặt “Giới hạn ứng dụng” cho mạng xã hội, game, và đặt “Luôn cho phép” Chrome hoặc ứng dụng Claude. Khi thấy báo cáo đủ ${S.settings.dailyMin} phút, bố mẹ mở khoá từ xa trong Family Link.</p>
   <p><b>iPhone:</b> Cài đặt → Thời gian sử dụng → Chia sẻ trong gia đình. Bật “Giờ nghỉ” (Downtime) cả ngày, thêm Safari/Claude vào “Luôn cho phép”, và bật “Yêu cầu thêm thời gian” để con xin mở khoá sau khi học xong.</p></div>`;
-  $("#lock").onclick=()=>{parentUnlocked=false;renderParent()};bindVerify();if($("#bkImp"))$("#bkImp").onclick=()=>renderBookImport();
+  $("#lock").onclick=()=>{parentUnlocked=false;renderParent()};bindVerify();if($("#bkImp"))$("#bkImp").onclick=()=>renderBookImport();main.querySelectorAll("[data-bkm]").forEach(x=>x.onclick=()=>bookManage(+x.dataset.bkm));
   $("#hookTest").onclick=async()=>{const u=$("#sHook").value.trim();if(!/^https:\/\/script\.google\.com\//.test(u)){toast("Địa chỉ Web App chưa đúng.");return}try{await fetch(u,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({ping:true,token:$("#sTok").value.trim()})});toast("Đã gửi. Kiểm tra hộp thư trong 1 phút.")}catch(e){toast("Không gửi được, kiểm tra mạng.")}};
   $("#backup").onclick=()=>{const b=new Blob([JSON.stringify(S)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`ielts-cho-zen-${dayKey()}.json`;document.body.appendChild(a);a.click();a.remove()};
   $("#restoreF").onchange=async ev=>{const f=ev.target.files[0];if(!f)return;const r=await modal(`<h3>Khôi phục dữ liệu?</h3><p>Dữ liệu hiện tại trên máy này sẽ được thay bằng file sao lưu.</p>`,[{label:"Khôi phục",cls:"danger"},{label:"Huỷ",cls:"ghost"}]);if(r.i!==0)return;try{S=mergeDefaults(JSON.parse(await f.text()));save();toast("Đã khôi phục dữ liệu.");renderParent()}catch(e){toast("File sao lưu không hợp lệ.")}};
