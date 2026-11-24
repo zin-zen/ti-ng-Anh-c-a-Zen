@@ -1644,7 +1644,7 @@ const PDFJS_BASE="";
 let _pdfjs=null,_fflate=null;const FFLATE_SRC="fflate.min.js";
 function loadFflate(){if(_fflate)return _fflate;_fflate=new Promise((res,rej)=>{if(window.fflate)return res(window.fflate);const sc=document.createElement("script");sc.src=FFLATE_SRC;sc.onload=()=>window.fflate?res(window.fflate):rej("fflate");sc.onerror=()=>{_fflate=null;rej("fflate")};document.head.appendChild(sc)});return _fflate}
 /* v3.6.4: giải nén TỪNG FILE MỘT (đọc mục lục zip, lấy từng phần của file gốc) – máy ít RAM cũng chịu được file zip vài trăm MB */
-const ZIP_OK=n=>!/(^|\/)(__MACOSX|\._)/.test(n)&&/\.(pdf|mp3|m4a|wav|aac|zip|docx|txt|doc)$/i.test(n);
+const ZIP_OK=n=>!/(^|\/)(__MACOSX|\._)/.test(n)&&/\.(pdf|mp3|m4a|m4b|mp4|wav|aac|flac|ogg|opus|wma|zip|docx|txt|doc)$/i.test(n);
 const mimeOf=n=>/\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":/\.txt$/i.test(n)?"text/plain":/\.m4a$/i.test(n)?"audio/mp4":/\.wav$/i.test(n)?"audio/wav":/\.aac$/i.test(n)?"audio/aac":"audio/mpeg";
 async function zipDir(file){const rd=async(a,b)=>new DataView(await file.slice(a,b).arrayBuffer());
   const tailLen=Math.min(file.size,66000),tail=await rd(file.size-tailLen,file.size);let e=-1;
@@ -1669,12 +1669,18 @@ async function zipEntry(file,en,ff,key){const h=new DataView(await file.slice(en
 /* v3.6.5: 1 file zip (hoặc 1 thư mục) chứa NHIỀU cuốn – nhận số sách theo tên thư mục/tên file, nhập từng cuốn */
 function bookNo(path){const m=[...String(path||"").matchAll(/(?:cambridge|cam|ielts)[\s_\-.]*(\d{1,2})(?!\d)/gi)].map(x=>+x[1]).filter(x=>x>=1&&x<=30);return m.length?m[m.length-1]:null}
 async function scanBooks(file){const L=new Set();(await zipDir(file)).forEach(x=>{if(ZIP_OK(x.name)){const n=bookNo(x.name);if(n)L.add(n)}});return [...L].sort((a,b)=>a-b)}
+/* file không có đuôi (vd "Cambridge IELTS 15 audio"): đoán loại theo vài byte đầu */
+async function sniffKind(b){try{const u=new Uint8Array(await b.slice(0,12).arrayBuffer());const t=String.fromCharCode(...u);
+  if(u[0]===0x50&&u[1]===0x4b&&(u[2]===3||u[2]===5))return "zip";if(t.startsWith("Rar!"))return "rar";if(t.startsWith("7z"))return "7z";
+  if(t.startsWith("ID3")||(u[0]===0xff&&(u[1]&0xe0)===0xe0))return "mp3";if(t.slice(4,8)==="ftyp")return "m4a";if(t.startsWith("%PDF"))return "pdf";if(t.startsWith("RIFF"))return "wav";return null}catch(e){return null}}
 async function unzipBook(file,onMsg,depth,want,prefix){const ff=await loadFflate();if(!depth)await bDel("tmp-");
-  onMsg&&onMsg("Đang đọc mục lục file nén…");const ents=(await zipDir(file)).filter(x=>{if(!ZIP_OK(x.name))return false;if(want==null)return true;const n=bookNo((prefix||"")+"/"+x.name);return /\.zip$/i.test(x.name)?(n==null||n===want):n===want});
+  onMsg&&onMsg("Đang đọc mục lục file nén…");const dir=await zipDir(file);if(!depth)window._bkStat={ext:{},meth:{},skip:0};dir.forEach(x=>{const e=(x.name.match(/\.([a-z0-9]{1,5})$/i)||[,"(khác)"])[1].toLowerCase();if(/__MACOSX|(^|\/)\._/.test(x.name))return;window._bkStat.ext[e]=(window._bkStat.ext[e]||0)+1;window._bkStat.meth[x.method]=(window._bkStat.meth[x.method]||0)+1});const noExt=x=>!/\.[a-z0-9]{1,5}$/i.test(x.name.split("/").pop())&&x.us>1e6;const ents=dir.filter(x=>{if(!ZIP_OK(x.name)&&!noExt(x))return false;if(want==null)return true;const n=bookNo((prefix||"")+"/"+x.name);if(want===-1)return n==null;return /\.zip$/i.test(x.name)?(n==null||n===want):n===want});
   let out=[],k=0;for(const en of ents){k++;const base=en.name.split("/").pop();onMsg&&onMsg(`Đang giải nén ${k}/${ents.length}: ${base}`);
-    let blob;try{blob=await zipEntry(file,en,ff,"tmp-"+(depth||0)+"-"+k)}catch(e){continue}
-    if(/\.zip$/i.test(base)){try{out=out.concat(await unzipBook(new File([blob],base),onMsg,(depth||0)+1,want,(prefix||"")+"/"+en.name))}catch(e){}}
-    else out.push(new File([blob],base,{type:mimeOf(base)}))}
+    let blob;try{blob=await zipEntry(file,en,ff,"tmp-"+(depth||0)+"-"+k)}catch(e){window._bkStat&&window._bkStat.skip++;continue}
+    let kind=/\.zip$/i.test(base)?"zip":null,nm=base;if(!/\.[a-z0-9]{1,5}$/i.test(base)){kind=await sniffKind(blob);if(kind==="rar"){window._bkStat&&(window._bkStat.rar=(window._bkStat.rar||0)+1);continue}if(!kind)continue;if(kind!=="zip")nm=base+"."+kind}
+    if(kind==="zip"){try{out=out.concat(await unzipBook(new File([blob],base+".zip"),onMsg,(depth||0)+1,(want>0&&bookNo((prefix||"")+"/"+en.name)===want)?null:want,(prefix||"")+"/"+en.name))}catch(e){}continue}
+    if(false){}
+    else out.push(new File([blob],nm,{type:mimeOf(nm)}))}
   return out}
 function loadPdfJs(){if(_pdfjs)return _pdfjs;_pdfjs=new Promise((res,rej)=>{if(window.pdfjsLib)return res(window.pdfjsLib);const sc=document.createElement("script");sc.src=PDFJS_BASE+"pdf.min.js";sc.onload=()=>{try{pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_BASE+"pdf.worker.min.js";res(pdfjsLib)}catch(e){rej(e)}};sc.onerror=()=>{_pdfjs=null;rej("pdfjs")};document.head.appendChild(sc)});return _pdfjs}
 function bdb(){return new Promise((res,rej)=>{if(!window.indexedDB)return rej("noidb");const r=indexedDB.open("ielts-books",1);r.onupgradeneeded=()=>r.result.createObjectStore("f");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
@@ -1748,10 +1754,15 @@ async function renderBookImport(){
     if(want==null){try{if(zf){msg.textContent="Đang xem trong file nén có những cuốn nào…";const L=await scanBooks(zf);if(L.length>1){window._bkZip=zf;window._bkDirF=null;chooser(L,"file "+zf.name);return}}
       else if(hasDir){const L=[...new Set(dirFiles().map(f=>bookNo(f.webkitRelativePath||f.name)).filter(Boolean))].sort((a,b)=>a-b);if(L.length>1){window._bkDirF=dirFiles();window._bkZip=null;chooser(L,"thư mục");return}}}catch(e){}}
     if(want!=null)$("#bkN").value=want;const n=parseInt($("#bkN").value);
-    try{if(zf)all=await unzipBook(zf,t=>msg.textContent=t,0,want);else if(hasDir)all=dirFiles().filter(f=>want==null||bookNo(f.webkitRelativePath||f.name)===want);else all=[...$("#bkPdf").files,...$("#bkMp3").files]}catch(e){msg.textContent="Không giải nén được file này ("+String(e).slice(0,50)+"). Nếu là file .rar, hãy giải nén ra thư mục rồi dùng Cách 2.";return}
-    const pdfs=all.filter(f=>/\.pdf$/i.test(f.name)).sort((a,b)=>b.size-a.size),mp3=all.filter(f=>/\.(mp3|m4a|wav|aac)$/i.test(f.name)),docs=all.filter(f=>/\.(docx|txt)$/i.test(f.name));
+    try{if(zf){all=await unzipBook(zf,t=>msg.textContent=t,0,want);if(want!=null&&!all.some(f=>/\.(mp3|m4a|m4b|mp4|wav|aac|flac|ogg|opus)$/i.test(f.name))){const st=window._bkStat;const extra=await unzipBook(zf,t=>msg.textContent=t,0,-1);window._bkStat=st;all=all.concat(extra.filter(f=>/\.(mp3|m4a|m4b|mp4|wav|aac|flac|ogg|opus)$/i.test(f.name)))}}
+      else if(false);else if(hasDir){const pick=dirFiles().filter(f=>want==null||bookNo(f.webkitRelativePath||f.name)===want);all=[];window._bkStat={ext:{},meth:{},skip:0};
+        for(const f of pick){if(/\.[a-z0-9]{1,5}$/i.test(f.name)||f.size<1e6){if(/\.zip$/i.test(f.name)){all=all.concat(await unzipBook(f,t=>msg.textContent=t,1,null))}else all.push(f);continue}
+          const k=await sniffKind(f);if(k==="zip")all=all.concat(await unzipBook(f,t=>msg.textContent=t,1,null));else if(k==="rar")window._bkStat.rar=(window._bkStat.rar||0)+1;else if(k)all.push(new File([f],f.name+"."+k,{type:mimeOf(f.name+"."+k)}))}}else all=[...$("#bkPdf").files,...$("#bkMp3").files]}catch(e){msg.textContent="Không giải nén được file này ("+String(e).slice(0,50)+"). Nếu là file .rar, hãy giải nén ra thư mục rồi dùng Cách 2.";return}
+    const pdfs=all.filter(f=>/\.pdf$/i.test(f.name)).sort((a,b)=>b.size-a.size),mp3=all.filter(f=>/\.(mp3|m4a|m4b|mp4|wav|aac|flac|ogg|opus)$/i.test(f.name)),docs=all.filter(f=>/\.(docx|txt)$/i.test(f.name));
     if(all.some(f=>/\.doc$/i.test(f.name))&&!docs.length)msg.textContent="Có file Word đời cũ (.doc) – app chưa đọc được. Mở file đó bằng Word, chọn Lưu thành .docx rồi nhập lại.";
-    if(!(n>=1)){toast("Nhập số của sách.");return}if(!pdfs.length){msg.textContent="Không thấy file PDF nào trong file đã chọn.";return}if(!mp3.length){msg.textContent="Không thấy file audio (MP3) nào trong file đã chọn.";return}
+    if(!(n>=1)){toast("Nhập số của sách.");return}const diag=()=>{const st=zf?window._bkStat:{ext:{},meth:{},skip:0,rar:(window._bkStat||{}).rar||0};if(!zf)dirFiles().forEach(f=>{const e=(f.name.match(/\.([a-z0-9]{1,5})$/i)||[,"(khác)"])[1].toLowerCase();st.ext[e]=(st.ext[e]||0)+1});if(!st)return "";const E=Object.entries(st.ext).sort((a,b)=>b[1]-a[1]).map(([e,c])=>c+" file ."+e).join(", ");const M=Object.keys(st.meth).filter(m=>m!=="0"&&m!=="8");
+      return `<br><span class="small">Trong ${zf?"file nén":"thư mục"} có: ${esc(E||"(trống)")}.${M.length?` Có ${M.map(m=>m==="9"?"kiểu nén Deflate64 (Windows)":"kiểu nén số "+m).join(", ")} mà trình duyệt chưa giải được.`:""}${st.skip?` ${st.skip} file không giải nén được.`:""}${st.rar?` <b>${st.rar} file audio là file nén RAR</b> (không có đuôi) – trình duyệt không mở được RAR: trên máy tính Windows, bấm chuột phải file đó → Giải nén tất cả (Extract All) / WinRAR, rồi nén lại thành .zip.`:""}${want?` (đang tìm file của sách ${want})`:""}</span><br><span class="small"><b>Gửi ảnh màn hình này cho người cài app</b>, hoặc nhấp đúp file zip trong Finder để giải nén ra thư mục rồi dùng <b>Cách 2</b>.</span>`};
+    if(!pdfs.length){msg.innerHTML="Không thấy file PDF nào trong file đã chọn."+diag();return}if(!mp3.length){msg.innerHTML="Không thấy file audio (MP3) nào trong file đã chọn."+diag();return}
     const pdf=pdfs[0];let T;
     try{let pages=[];for(const [i,f] of pdfs.slice(0,3).entries()){const pg=await pdfReadText(f,(p,t)=>{msg.textContent=`Đang đọc PDF ${i+1}/${Math.min(3,pdfs.length)}: trang ${p}/${t}`});if(i===0)pages=pg;else pages=pages.concat(pg)}
       const nPdf=pages.length;
