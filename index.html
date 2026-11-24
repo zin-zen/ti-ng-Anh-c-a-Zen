@@ -1664,7 +1664,7 @@ async function zipEntry(file,en,ff,key){const h=new DataView(await file.slice(en
   if(en.method!==8)throw "kiểu nén lạ";
   const parts=[];await new Promise((res,rej)=>{const inf=new ff.Inflate((d,fin)=>{parts.push(d);if(fin)res()});(async()=>{try{const C=4<<20;for(let p=0;p<en.cs;p+=C){const ch=new Uint8Array(await raw.slice(p,Math.min(en.cs,p+C)).arrayBuffer());inf.push(ch,p+C>=en.cs)}if(!en.cs)res()}catch(e){rej(e)}})()});
   let b=new Blob(parts);parts.length=0;
-  try{await bPut(key,b);const g=await bGet(key);if(g)b=g}catch(e){}
+  try{await bPut(key,b);const g=await bRaw(key);if(g){b=g;b._k=key}}catch(e){}
   return b}
 /* v3.6.5: 1 file zip (hoặc 1 thư mục) chứa NHIỀU cuốn – nhận số sách theo tên thư mục/tên file, nhập từng cuốn */
 function bookNo(path){const m=[...String(path||"").matchAll(/(?:cambridge|cam|ielts)[\s_\-.]*(\d{1,2})(?!\d)/gi)].map(x=>+x[1]).filter(x=>x>=1&&x<=30);return m.length?m[m.length-1]:null}
@@ -1673,19 +1673,25 @@ async function scanBooks(file){const L=new Set();(await zipDir(file)).forEach(x=
 async function sniffKind(b){try{const u=new Uint8Array(await b.slice(0,12).arrayBuffer());const t=String.fromCharCode(...u);
   if(u[0]===0x50&&u[1]===0x4b&&(u[2]===3||u[2]===5))return "zip";if(t.startsWith("Rar!"))return "rar";if(t.startsWith("7z"))return "7z";
   if(t.startsWith("ID3")||(u[0]===0xff&&(u[1]&0xe0)===0xe0))return "mp3";if(t.slice(4,8)==="ftyp")return "m4a";if(t.startsWith("%PDF"))return "pdf";if(t.startsWith("RIFF"))return "wav";return null}catch(e){return null}}
-async function unzipBook(file,onMsg,depth,want,prefix){const ff=await loadFflate();if(!depth)await bDel("tmp-");
+let _zipRun="";
+async function unzipBook(file,onMsg,depth,want,prefix){const ff=await loadFflate();if(!depth){await cleanTmp();_zipRun=Date.now().toString(36)}
   onMsg&&onMsg("Đang đọc mục lục file nén…");const dir=await zipDir(file);if(!depth)window._bkStat={ext:{},meth:{},skip:0};dir.forEach(x=>{const e=(x.name.match(/\.([a-z0-9]{1,5})$/i)||[,"(khác)"])[1].toLowerCase();if(/__MACOSX|(^|\/)\._/.test(x.name))return;window._bkStat.ext[e]=(window._bkStat.ext[e]||0)+1;window._bkStat.meth[x.method]=(window._bkStat.meth[x.method]||0)+1});const noExt=x=>!/\.[a-z0-9]{1,5}$/i.test(x.name.split("/").pop())&&x.us>1e6;const ents=dir.filter(x=>{if(!ZIP_OK(x.name)&&!noExt(x))return false;if(want==null)return true;const n=bookNo((prefix||"")+"/"+x.name);if(want===-1)return n==null;return /\.zip$/i.test(x.name)?(n==null||n===want):n===want});
   let out=[],k=0;for(const en of ents){k++;const base=en.name.split("/").pop();onMsg&&onMsg(`Đang giải nén ${k}/${ents.length}: ${base}`);
-    let blob;try{blob=await zipEntry(file,en,ff,"tmp-"+(depth||0)+"-"+k)}catch(e){window._bkStat&&window._bkStat.skip++;continue}
+    let blob;try{blob=await zipEntry(file,en,ff,"tmp-"+_zipRun+"-"+(prefix||"").length+"-"+(depth||0)+"-"+k)}catch(e){window._bkStat&&window._bkStat.skip++;continue}
     let kind=/\.zip$/i.test(base)?"zip":null,nm=base;if(!/\.[a-z0-9]{1,5}$/i.test(base)){kind=await sniffKind(blob);if(kind==="rar"){window._bkStat&&(window._bkStat.rar=(window._bkStat.rar||0)+1);continue}if(!kind)continue;if(kind!=="zip")nm=base+"."+kind}
-    if(kind==="zip"){try{out=out.concat(await unzipBook(new File([blob],base+".zip"),onMsg,(depth||0)+1,(want>0&&bookNo((prefix||"")+"/"+en.name)===want)?null:want,(prefix||"")+"/"+en.name))}catch(e){}continue}
+    if(kind==="zip"){try{out=out.concat(await unzipBook(new File([blob],base+".zip"),onMsg,(depth||0)+1,(want>0&&bookNo((prefix||"")+"/"+en.name)===want)?null:want,(prefix||"")+"/"+en.name))}catch(e){}if(blob._k)await bDelKey(blob._k);continue}
     if(false){}
-    else out.push(new File([blob],nm,{type:mimeOf(nm)}))}
+    else{const f=new File([blob],nm,{type:mimeOf(nm)});if(blob._k)f._k=blob._k;out.push(f)}}
   return out}
 function loadPdfJs(){if(_pdfjs)return _pdfjs;_pdfjs=new Promise((res,rej)=>{if(window.pdfjsLib)return res(window.pdfjsLib);const sc=document.createElement("script");sc.src=PDFJS_BASE+"pdf.min.js";sc.onload=()=>{try{pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_BASE+"pdf.worker.min.js";res(pdfjsLib)}catch(e){rej(e)}};sc.onerror=()=>{_pdfjs=null;rej("pdfjs")};document.head.appendChild(sc)});return _pdfjs}
 function bdb(){return new Promise((res,rej)=>{if(!window.indexedDB)return rej("noidb");const r=indexedDB.open("ielts-books",1);r.onupgradeneeded=()=>r.result.createObjectStore("f");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function bPut(k,v){const db=await bdb();await new Promise((res,rej)=>{const t=db.transaction("f","readwrite");t.objectStore("f").put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
-async function bGet(k){try{const db=await bdb();return await new Promise(res=>{const r=db.transaction("f").objectStore("f").get(k);r.onsuccess=()=>res(r.result||null);r.onerror=()=>res(null)})}catch(e){return null}}
+async function bRaw(k){try{const db=await bdb();return await new Promise(res=>{const r=db.transaction("f").objectStore("f").get(k);r.onsuccess=()=>res(r.result||null);r.onerror=()=>res(null)})}catch(e){return null}}
+/* v3.6.8: sách lưu dạng "trỏ tới" file đã giải nén sẵn (không chép lần 2 → đỡ một nửa dung lượng) */
+async function bGet(k){const v=await bRaw(k);if(v&&v.ref&&!(v instanceof Blob))return await bRaw(v.ref);return v}
+async function bDelKey(k){try{const db=await bdb();await new Promise(res=>{const t=db.transaction("f","readwrite");t.objectStore("f").delete(k);t.oncomplete=res;t.onerror=res})}catch(e){}}
+async function cleanTmp(){try{const db=await bdb();const keys=[],refs=new Set();await new Promise(res=>{const c=db.transaction("f").objectStore("f").openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return res();const k=String(x.key);if(k.startsWith("tmp-"))keys.push(k);else if(x.value&&x.value.ref&&!(x.value instanceof Blob))refs.add(x.value.ref);x.continue()};c.onerror=()=>res()});
+  for(const k of keys)if(!refs.has(k))await bDelKey(k)}catch(e){}}
 async function bDel(prefix){try{const db=await bdb();await new Promise(res=>{const st=db.transaction("f","readwrite").objectStore("f");const c=st.openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return res();if(String(x.key).startsWith(prefix))x.delete();x.continue()};c.onerror=()=>res()})}catch(e){}}
 function parseKeyLines(lines){
   const out=[],seen={},put=(q,a,g)=>{q=+q;a=String(a||"").trim().replace(/\s+/g," ");if(!(q>=1&&q<=40)||!a||seen[q]||/^(questions?|part)\b/i.test(a))return;seen[q]=1;let st=false;if(/\*\s*$/.test(a)){a=a.replace(/\s*\*+\s*$/,"");st=true}const o=g?{q,a,g}:{q,a};if(st)o._st=1;out.push(o)};
@@ -1709,12 +1715,12 @@ function parseKeyLines(lines){
   /* đáp án có dấu * = hai câu ghép cặp, chấp nhận thứ tự bất kỳ */
   for(let i=0;i<out.length;i++){if(out[i]._st&&!out[i].g&&out[i+1]&&out[i+1]._st&&!out[i+1].g&&out[i+1].q===out[i].q+1){const g=out[i].q+"-"+out[i+1].q;out[i].g=g;out[i+1].g=g;i++}}
   out.forEach(o=>delete o._st);return out}
-async function pdfReadText(file,onProg){
-  const lib=await loadPdfJs();let doc;
-  try{const rt=new lib.PDFDataRangeTransport(file.size,new Uint8Array(await file.slice(0,Math.min(file.size,262144)).arrayBuffer()));
+async function openPdf(lib,file){try{const rt=new lib.PDFDataRangeTransport(file.size,new Uint8Array(await file.slice(0,Math.min(file.size,262144)).arrayBuffer()));
     rt.requestDataRange=(b,e)=>{file.slice(b,e).arrayBuffer().then(ab=>rt.onDataRange(b,new Uint8Array(ab)))};
-    doc=await lib.getDocument({range:rt,length:file.size,rangeChunkSize:262144,disableAutoFetch:true,disableStream:true}).promise}
-  catch(e){doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise}
+    return await lib.getDocument({range:rt,length:file.size,rangeChunkSize:262144,disableAutoFetch:true,disableStream:true}).promise}
+  catch(e){return await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise}}
+async function pdfReadText(file,onProg){
+  const lib=await loadPdfJs(),doc=await openPdf(lib,file);
   const pages=[];
   for(let p=1;p<=doc.numPages;p++){const pg=await doc.getPage(p),vp=pg.getViewport({scale:1}),tc=await pg.getTextContent(),mid=vp.width/2;
     const items=tc.items.filter(it=>it.str&&it.str.trim()).map(it=>({x:it.transform[4],y:it.transform[5],s:it.str}));
@@ -1802,10 +1808,13 @@ function bookReview(n,pdf,files,T,map){
       $("#k"+t).value.split(/\n/).forEach(l=>{const m=l.match(/^(\d{1,2})\s.*#(\S+)$/);if(m){const k=key.find(x=>x.q===+m[1]);if(k)k.g=m[2]}});
       b.tests[t]={pages:[+$("#pf"+t).value||0,+$("#pt"+t).value||0],key,audio:{}};
       if(key.length<10){toast(`Test ${t}: mới có ${key.length} đáp án. Kiểm tra lại ô đáp án nhé.`);return}}
-    try{msg.textContent="Đang lưu PDF…";await bDel("b"+n+"-");await bPut("b"+n+"-pdf",pdf);
-      for(let t=1;t<=4;t++)for(let p=1;p<=4;p++){const v=$(`#a${t}-${p}`).value;if(v!==""){msg.textContent=`Đang lưu audio Test ${t} Part ${p}…`;await bPut(`b${n}-a-${t}-${p}`,files[+v]);b.tests[t].audio[p]=1}}
-    }catch(e){msg.textContent="Máy không đủ chỗ lưu hoặc trình duyệt chặn lưu. Thử giải phóng bộ nhớ rồi lưu lại.";return}
-    S.books=bookList().filter(x=>x.n!==n).concat([b]).sort((a,c)=>a.n-c.n);S.bookProg=S.bookProg||{};if(!S.bookProg[n])S.bookProg[n]={t:1,p:1};setBookFiles(myBookFiles().concat([n]));save();syncSoon();bDel("tmp-");
+    const keep=f=>f&&f._k?{ref:f._k,name:f.name,type:f.type,size:f.size}:f;
+    try{try{navigator.storage&&navigator.storage.persist&&await navigator.storage.persist()}catch(e){}
+      msg.textContent="Đang lưu PDF…";await bDel("b"+n+"-");await bPut("b"+n+"-pdf",keep(pdf));
+      for(let t=1;t<=4;t++)for(let p=1;p<=4;p++){const v=$(`#a${t}-${p}`).value;if(v!==""){msg.textContent=`Đang lưu audio Test ${t} Part ${p}…`;await bPut(`b${n}-a-${t}-${p}`,keep(files[+v]));b.tests[t].audio[p]=1}}
+    }catch(e){let est="";try{const q=await navigator.storage.estimate();est=` Đã dùng ${Math.round(q.usage/1e6)} MB / cho phép ${Math.round(q.quota/1e6)} MB.`}catch(_){}
+      msg.innerHTML="Máy không đủ chỗ lưu hoặc trình duyệt chặn lưu ("+esc(String(e&&e.name||e).slice(0,40))+")."+esc(est)+" Kiểm tra: <b>Táo  → Giới thiệu về máy Mac → Dung lượng</b> phải còn trống vài GB. Giải phóng xong bấm Lưu lại.";return}
+    S.books=bookList().filter(x=>x.n!==n).concat([b]).sort((a,c)=>a.n-c.n);S.bookProg=S.bookProg||{};if(!S.bookProg[n])S.bookProg[n]={t:1,p:1};setBookFiles(myBookFiles().concat([n]));save();syncSoon();cleanTmp();
     toast(`Đã lưu Cambridge ${n}. Con sẽ thấy ở Bước 4.`);if(window._bkZip||window._bkDirF)renderBookImport();else renderParent()}}
 function bookPanel(){const L=bookList();return `<div class="panel"><h3 style="margin-top:0">📗 Sách Cambridge của nhà</h3>${L.length?`<p class="small">${L.map(b=>{const pr=(S.bookProg||{})[b.n]||{t:1,p:1};return `Cambridge ${b.n}: ${pr.t>4?"đã làm hết":`đang ở Test ${pr.t} Part ${pr.p}`}${myBookFiles().includes(b.n)?"":" (chưa có trên máy này – mở app trên máy kia, để 2 máy cạnh nhau cùng Wi-Fi là tự chuyển sang)"}`}).join(" · ")}</p>`:`<p class="small muted">Có sách Cambridge bản quyền (PDF + MP3) trên máy này? Nhập vào để con luyện và app tự chấm.</p>`}<button class="btn small teal" id="bkImp">Nhập sách</button></div>`}
 async function bookRoom(o){
@@ -1826,7 +1835,7 @@ async function bookRoom(o){
     const key=T.key.filter(k=>k.q>=first&&k.q<=first+9);if(!key.length){toast("Sách chưa có đáp án Part này – bố mẹ kiểm tra lại ở mục Nhập sách.");return}
     const byQ=Array.from({length:10},(_,k)=>A[k]);const r=localGrade({answers:key},key.map(k=>byQ[k.q-first]||""));
     officialReasons({id:`b${b.n}-${t}-${p}`,label:`Cambridge ${b.n} · Test ${t} · Part ${p}`},r,()=>{const pr=S.bookProg[b.n]||{t:1,p:1};pr.p++;if(pr.p>4){pr.p=1;pr.t++}S.bookProg[b.n]=pr;save()})};
-  try{const pdf=await bGet(`b${b.n}-pdf`);if(!pdf)throw "nopdf";const lib=await loadPdfJs(),doc=await lib.getDocument({data:new Uint8Array(await pdf.arrayBuffer())}).promise;
+  try{const pdf=await bGet(`b${b.n}-pdf`);if(!pdf)throw "nopdf";const lib=await loadPdfJs(),doc=await openPdf(lib,pdf);
     const v=$("#bkView");if(!v)return;v.innerHTML="";const [a,z]=T.pages;const from=Math.max(1,a||1),to=Math.min(doc.numPages,z||from+3);
     for(let pg=from;pg<=to;pg++){const page=await doc.getPage(pg),w=(v.clientWidth||360)-4,vp0=page.getViewport({scale:1}),sc=w/vp0.width*(window.devicePixelRatio||1),vp=page.getViewport({scale:sc});
       const cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;cv.style.width="100%";cv.style.display="block";cv.style.borderBottom="1px solid #ddd";v.appendChild(cv);await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise}
