@@ -1666,11 +1666,14 @@ async function zipEntry(file,en,ff,key){const h=new DataView(await file.slice(en
   let b=new Blob(parts);parts.length=0;
   try{await bPut(key,b);const g=await bGet(key);if(g)b=g}catch(e){}
   return b}
-async function unzipBook(file,onMsg,depth){const ff=await loadFflate();if(!depth)await bDel("tmp-");
-  onMsg&&onMsg("Đang đọc mục lục file nén…");const ents=(await zipDir(file)).filter(x=>ZIP_OK(x.name));
+/* v3.6.5: 1 file zip (hoặc 1 thư mục) chứa NHIỀU cuốn – nhận số sách theo tên thư mục/tên file, nhập từng cuốn */
+function bookNo(path){const m=[...String(path||"").matchAll(/(?:cambridge|cam|ielts)[\s_\-.]*(\d{1,2})(?!\d)/gi)].map(x=>+x[1]).filter(x=>x>=1&&x<=30);return m.length?m[m.length-1]:null}
+async function scanBooks(file){const L=new Set();(await zipDir(file)).forEach(x=>{if(ZIP_OK(x.name)){const n=bookNo(x.name);if(n)L.add(n)}});return [...L].sort((a,b)=>a-b)}
+async function unzipBook(file,onMsg,depth,want,prefix){const ff=await loadFflate();if(!depth)await bDel("tmp-");
+  onMsg&&onMsg("Đang đọc mục lục file nén…");const ents=(await zipDir(file)).filter(x=>{if(!ZIP_OK(x.name))return false;if(want==null)return true;const n=bookNo((prefix||"")+"/"+x.name);return /\.zip$/i.test(x.name)?(n==null||n===want):n===want});
   let out=[],k=0;for(const en of ents){k++;const base=en.name.split("/").pop();onMsg&&onMsg(`Đang giải nén ${k}/${ents.length}: ${base}`);
     let blob;try{blob=await zipEntry(file,en,ff,"tmp-"+(depth||0)+"-"+k)}catch(e){continue}
-    if(/\.zip$/i.test(base)){try{out=out.concat(await unzipBook(new File([blob],base),onMsg,(depth||0)+1))}catch(e){}}
+    if(/\.zip$/i.test(base)){try{out=out.concat(await unzipBook(new File([blob],base),onMsg,(depth||0)+1,want,(prefix||"")+"/"+en.name))}catch(e){}}
     else out.push(new File([blob],base,{type:mimeOf(base)}))}
   return out}
 function loadPdfJs(){if(_pdfjs)return _pdfjs;_pdfjs=new Promise((res,rej)=>{if(window.pdfjsLib)return res(window.pdfjsLib);const sc=document.createElement("script");sc.src=PDFJS_BASE+"pdf.min.js";sc.onload=()=>{try{pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_BASE+"pdf.worker.min.js";res(pdfjsLib)}catch(e){rej(e)}};sc.onerror=()=>{_pdfjs=null;rej("pdfjs")};document.head.appendChild(sc)});return _pdfjs}
@@ -1731,11 +1734,21 @@ async function renderBookImport(){
   <label class="f">File PDF của sách</label><input type="file" id="bkPdf" accept="application/pdf,.pdf">
   <label class="f">Các file audio Listening (chọn tất cả cùng lúc)</label><input type="file" id="bkMp3" accept="audio/*,.mp3,.m4a" multiple></details>
   <div class="row" style="margin-top:12px"><button class="btn teal" id="bkGo">Đọc sách</button></div><p class="small muted" id="bkMsg"></p></div>`;
-  $("#bk").onclick=()=>renderParent();
+  $("#bk").onclick=()=>{window._bkZip=null;window._bkDirF=null;renderParent()};
   const guessN=f=>{const m=String(f&&f.name||"").match(/(?:ielts|cambridge|cam)\D{0,6}(\d{1,2})/i)||String(f&&f.name||"").match(/(\d{1,2})/);if(m&&!$("#bkN").value)$("#bkN").value=m[1]};
   $("#bkZip").onchange=e=>guessN(e.target.files[0]);$("#bkDir").onchange=e=>{const f=e.target.files[0];if(f)guessN({name:(f.webkitRelativePath||f.name).split("/")[0]})};$("#bkPdf").onchange=e=>guessN(e.target.files[0]);
-  $("#bkGo").onclick=async()=>{const n=parseInt($("#bkN").value),msg=$("#bkMsg");let all=[];
-    try{if($("#bkZip").files[0])all=await unzipBook($("#bkZip").files[0],t=>msg.textContent=t);else if($("#bkDir").files.length)all=[...$("#bkDir").files].filter(f=>!/^\._/.test(f.name));else all=[...$("#bkPdf").files,...$("#bkMp3").files]}catch(e){msg.textContent="Không giải nén được file này ("+String(e).slice(0,50)+"). Nếu là file .rar, hãy giải nén ra thư mục rồi dùng Cách 2.";return}
+  const chooser=(L,src)=>{const msg=$("#bkMsg"),have=n=>bookList().some(b=>b.n===n)&&myBookFiles().includes(n);
+    msg.innerHTML=`<b>Trong ${esc(src)} có ${L.length} cuốn.</b> Bấm từng cuốn để nhập (mỗi lần 1 cuốn – xong cuốn này app quay lại đây để nhập cuốn tiếp):<div class="row" style="margin-top:8px;gap:8px">${L.map(n=>`<button class="btn ${have(n)?"ghost":"teal"} small" data-bkn="${n}">${have(n)?"✔ ":""}Cambridge ${n}</button>`).join("")}</div>`;
+    msg.querySelectorAll("[data-bkn]").forEach(b=>b.onclick=()=>{window._bkWant=+b.dataset.bkn;$("#bkN").value=b.dataset.bkn;$("#bkGo").click()})};
+  if(window._bkDirF){const L=[...new Set(window._bkDirF.map(f=>bookNo(f.webkitRelativePath||f.name)).filter(Boolean))].sort((a,b)=>a-b);setTimeout(()=>chooser(L,"thư mục"),0)}
+  else if(window._bkZip){scanBooks(window._bkZip).then(L=>{if(L.length>1)chooser(L,"file "+window._bkZip.name)}).catch(()=>{})}
+  const dirFiles=()=>($("#bkDir").files.length?[...$("#bkDir").files]:(window._bkDirF||[])).filter(f=>!/^\._/.test(f.name));
+  $("#bkGo").onclick=async()=>{const msg=$("#bkMsg");let all=[];const want=window._bkWant||null;window._bkWant=null;
+    const zf=$("#bkZip").files[0]||(!$("#bkDir").files.length&&!$("#bkPdf").files.length&&!window._bkDirF?window._bkZip:null)||null;const hasDir=!zf&&dirFiles().length>0;
+    if(want==null){try{if(zf){msg.textContent="Đang xem trong file nén có những cuốn nào…";const L=await scanBooks(zf);if(L.length>1){window._bkZip=zf;window._bkDirF=null;chooser(L,"file "+zf.name);return}}
+      else if(hasDir){const L=[...new Set(dirFiles().map(f=>bookNo(f.webkitRelativePath||f.name)).filter(Boolean))].sort((a,b)=>a-b);if(L.length>1){window._bkDirF=dirFiles();window._bkZip=null;chooser(L,"thư mục");return}}}catch(e){}}
+    if(want!=null)$("#bkN").value=want;const n=parseInt($("#bkN").value);
+    try{if(zf)all=await unzipBook(zf,t=>msg.textContent=t,0,want);else if(hasDir)all=dirFiles().filter(f=>want==null||bookNo(f.webkitRelativePath||f.name)===want);else all=[...$("#bkPdf").files,...$("#bkMp3").files]}catch(e){msg.textContent="Không giải nén được file này ("+String(e).slice(0,50)+"). Nếu là file .rar, hãy giải nén ra thư mục rồi dùng Cách 2.";return}
     const pdfs=all.filter(f=>/\.pdf$/i.test(f.name)).sort((a,b)=>b.size-a.size),mp3=all.filter(f=>/\.(mp3|m4a|wav|aac)$/i.test(f.name)),docs=all.filter(f=>/\.(docx|txt)$/i.test(f.name));
     if(all.some(f=>/\.doc$/i.test(f.name))&&!docs.length)msg.textContent="Có file Word đời cũ (.doc) – app chưa đọc được. Mở file đó bằng Word, chọn Lưu thành .docx rồi nhập lại.";
     if(!(n>=1)){toast("Nhập số của sách.");return}if(!pdfs.length){msg.textContent="Không thấy file PDF nào trong file đã chọn.";return}if(!mp3.length){msg.textContent="Không thấy file audio (MP3) nào trong file đã chọn.";return}
@@ -1768,7 +1781,7 @@ function bookReview(n,pdf,files,T,map){
       for(let t=1;t<=4;t++)for(let p=1;p<=4;p++){const v=$(`#a${t}-${p}`).value;if(v!==""){msg.textContent=`Đang lưu audio Test ${t} Part ${p}…`;await bPut(`b${n}-a-${t}-${p}`,files[+v]);b.tests[t].audio[p]=1}}
     }catch(e){msg.textContent="Máy không đủ chỗ lưu hoặc trình duyệt chặn lưu. Thử giải phóng bộ nhớ rồi lưu lại.";return}
     S.books=bookList().filter(x=>x.n!==n).concat([b]).sort((a,c)=>a.n-c.n);S.bookProg=S.bookProg||{};if(!S.bookProg[n])S.bookProg[n]={t:1,p:1};setBookFiles(myBookFiles().concat([n]));save();syncSoon();bDel("tmp-");
-    toast(`Đã lưu Cambridge ${n}. Con sẽ thấy ở Bước 4.`);renderParent()}}
+    toast(`Đã lưu Cambridge ${n}. Con sẽ thấy ở Bước 4.`);if(window._bkZip||window._bkDirF)renderBookImport();else renderParent()}}
 function bookPanel(){const L=bookList();return `<div class="panel"><h3 style="margin-top:0">📗 Sách Cambridge của nhà</h3>${L.length?`<p class="small">${L.map(b=>{const pr=(S.bookProg||{})[b.n]||{t:1,p:1};return `Cambridge ${b.n}: ${pr.t>4?"đã làm hết":`đang ở Test ${pr.t} Part ${pr.p}`}${myBookFiles().includes(b.n)?"":" (chưa có trên máy này – mở app trên máy kia, để 2 máy cạnh nhau cùng Wi-Fi là tự chuyển sang)"}`}).join(" · ")}</p>`:`<p class="small muted">Có sách Cambridge bản quyền (PDF + MP3) trên máy này? Nhập vào để con luyện và app tự chấm.</p>`}<button class="btn small teal" id="bkImp">Nhập sách</button></div>`}
 async function bookRoom(o){
   const {b,t,p}=o,T=b.tests[t],first=(p-1)*10+1,desk=innerWidth>=900;
