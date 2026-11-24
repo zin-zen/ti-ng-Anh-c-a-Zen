@@ -1031,6 +1031,7 @@ setInterval(tick,1000);
 function dayMinutes(k){let s=S.sessions.filter(x=>x.date===k).reduce((a,x)=>a+(x.secs||0),0);if(session&&k===dayKey())s+=session.active;return s/60}
 function updateTodayPill(){const m=Math.floor(dayMinutes(dayKey()));const goal=S.settings.dailyMin;const p=$("#todayPill");p.textContent=`Hôm nay ${m}/${goal} phút${m>=goal?" ✓":""}`;p.style.background=m>=goal?"var(--good-bg)":""}
 function endSession(score,details={},opts={}){
+  try{syncSoon()}catch(e){}
   const s=session;if(!s)return null;
   const rec={id:Date.now().toString(36),date:dayKey(),type:s.type,start:s.start,secs:s.active,score:score==null?null:Math.round(score*10)/10,band:details.band??null,rushed:s.rushed,status:opts.abandoned?"bỏ dở":"xong",details};
   const before=dayMinutes(dayKey())-s.active/60;
@@ -1080,7 +1081,7 @@ let tab="home",parentUnlocked=false;
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{welcomeOpen=false;tab=b.dataset.tab;render();scrollTo(0,0)});
 function setTabUI(){document.querySelectorAll(".tabs button").forEach(b=>b.toggleAttribute("aria-current",b.dataset.tab===tab)||b.dataset.tab===tab&&b.setAttribute("aria-current","page"))}
 function render(){
-  if(session||welcomeOpen)return;
+  if(session||welcomeOpen)return;main.style.maxWidth="";
   document.querySelectorAll(".tabs button").forEach(b=>{if(b.dataset.tab===tab)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
   ({home:renderHome,mock:renderMockSetup,plan:renderPlan,stickers:renderStickers,parent:renderParent})[tab]();
   updateTodayPill();
@@ -1265,7 +1266,7 @@ function allFocusTasks(){const c=camNext();return [
  {id:"vocab",skill:"vocab",t:"Từ vựng",s:`${computeQuota()} từ · thẻ nhớ, nghe – viết chính tả, kiểm tra`,done:doneToday(s=>s.type==="vocab")},
  {id:"listen",skill:"listening",t:"Nghe IELTS",s:`1 bài · còn ${bankLeft(LISTENING_BANK,"L")}/${LISTENING_BANK.length} bài con chưa nghe`,done:doneToday(s=>s.type==="listening"&&!(s.details&&s.details.kind))},
  {id:"dict",skill:"listening",t:"Nghe chép chính tả",s:"6 câu · nghe từng câu rồi gõ lại",done:doneToday(s=>s.details&&s.details.kind==="dict")},
- {id:"cam",skill:"listening",t:"Đề thi Nghe (như thi thật)",s:S.camBook?`Cambridge ${c.book} · Test ${c.test} · Part ${c.part}`:`Part ${examPart()} · làm ngay trong app, cô chấm ngay`,done:doneToday(s=>s.details&&s.details.kind==="cam")},
+ {id:"cam",skill:"listening",t:bookNext()?"Đề Cambridge (sách của nhà)":officialNext()?"Đề chính thức (British Council / IELTS.org)":"Đề thi Nghe (như thi thật)",s:bookNext()?`Cambridge ${bookNext().b.n} · Test ${bookNext().t} · Part ${bookNext().p}`:officialNext()?"Làm ngay trong app · chấm theo đáp án chính thức":`Part ${examPart()} · làm ngay trong app, cô chấm ngay`,done:doneToday(s=>s.details&&s.details.kind==="cam")},
  {id:"extra",skill:"listening",t:"Nghe thêm: BBC 6 Minute English",s:"1 tập ~6 phút · trả lời 3 câu, ghi 3 từ mới",done:doneToday(s=>s.details&&s.details.kind==="extra")}]}
 function altId(){const k=dayKey();const did=id=>doneToday(s=>s.details&&s.details.kind===id);if(did("cam"))return "cam";if(did("extra"))return "extra";return daysBetween(S.firstDay||k,k)%2===0?"cam":"extra"}
 function focusTasks(){const a=altId();return allFocusTasks().filter(t=>t.id!==(a==="cam"?"extra":"cam"))}
@@ -1532,7 +1533,7 @@ const IDP_P=["Form completion","Matching 1","Matching 2","Multiple choice","Note
 function mix(...ls){const out=[];const m=Math.max(...ls.map(l=>l.length));for(let i=0;i<m;i++)ls.forEach(l=>{if(l[i])out.push(l[i])});return out}
 const WEB_BASE=[...BC_FULL,...IDP_FULL,...BC_MOCKS,...mix(IDP_C,BC_SAMPLES,IDP_P)];
 function webItems(){const ex=(S.extraTests||[]).filter(x=>x&&x.id&&x.url&&x.label&&!WEB_BASE.some(b=>b.id===x.id));return WEB_BASE.concat(ex)}
-async function loadRemoteTests(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch("tests.json",{cache:"no-store"});if(!r.ok)return;const j=await r.json();const list=(Array.isArray(j)?j:j.tests||[]).filter(x=>x&&x.id&&/^https:\/\//.test(x.url||"")&&x.label).map(x=>({id:String(x.id),src:String(x.src||""),url:String(x.url),part:+x.part||0,short:!(+x.part),label:String(x.label),find:String(x.find||"làm theo hướng dẫn trên trang")}));
+async function loadRemoteTests(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch("tests.json",{cache:"no-store"});if(!r.ok)return;const j=await r.json();const list=(Array.isArray(j)?j:j.tests||[]).filter(x=>x&&x.id&&/^https:\/\//.test(x.url||"")&&x.label).map(x=>({id:String(x.id),src:String(x.src||""),url:String(x.url),key:/^https:\/\//.test(x.key||"")?String(x.key):"",part:+x.part||0,short:!(+x.part),label:String(x.label),find:String(x.find||"làm theo hướng dẫn trên trang")}));
   const before=(S.extraTests||[]).length;S.extraTests=list;if(list.length!==before)save()}catch(e){}}
 function webDone(){return (S.webDone||[])}
 function webNext(){const W=webItems(),d=webDone();const it=W.find(x=>!d.includes(x.id));return it?Object.assign({},it):Object.assign({},W.find(x=>x.id===d[0])||W[0],{again:true})}
@@ -1543,6 +1544,308 @@ function camFallback(w){
   const set=pickFresh(LISTENING_BANK,"L");if(!session)beginSession("listening");
   runQuizSet(clone(set),"listening",{onDone:res=>{const rec=endSession(res.correct/res.total*10,{kind:"cam",fallback:true,correct:res.correct,total:res.total,band:rawToBand(res.correct/res.total*40),title:"Bài trong app (con không tìm thấy đề: "+label+")",notFound:label});showResult(rec,`${res.correct}/${res.total} câu đúng`,`<p class="small muted">Con đã báo không tìm thấy <b>${esc(label)}</b>. Bố mẹ sẽ thấy trong báo cáo và giúp con. Lần sau app chuyển sang đề khác.</p>`)}});
 }
+/* v3.2: đề chính thức mở trong app, AI lấy đáp án chính thức để chấm */
+const BCI="https://ielts.inspera.com/player/?assessmentRunId=",BCK="https://takeielts.britishcouncil.org/sites/default/files/%5Bdownloads%5D/ielts-listening-computer-delivered-";
+const OFFICIAL_AUTO=[
+ {id:"oa-note",label:"British Council · Note Completion · Part 1",url:BCI+"189696078&context=exam#/section/184163671/question/184163670/scorableItem/1",key:BCK+"note-completion-answer-key.pdf"},
+ {id:"oa-mc2",label:"British Council · Multiple choice (chọn nhiều đáp án) · Part 1",url:BCI+"189696950&context=exam#/section/171824485/question/145454275/scorableItem/1",key:BCK+"multiple-choice-more-than-one-answer-answer-key.pdf"},
+ {id:"oa-map",label:"British Council · Plan/Map/Diagram Labelling · Part 2",url:BCI+"189695339&context=exam#/section/174541820/question/174541819/scorableItem/1",key:BCK+"plan-map-diagram-labelling-answer-key.pdf"},
+ {id:"oa-short",label:"British Council · Short Answer Questions · Part 2",url:BCI+"189694459&context=exam#/section/174309255/question/174309254/scorableItem/1",key:BCK+"short-answer-answer-key.pdf"},
+ {id:"oa-mc1",label:"British Council · Multiple choice (một đáp án) · Part 3",url:BCI+"189697549&context=exam#/section/171826252/question/145591537/scorableItem/1",key:BCK+"multiple-choice-one-answer-answer-key.pdf"},
+ {id:"oa-sent",label:"British Council · Sentence Completion · Part 3",url:BCI+"189694885&context=exam#/section/184163445/question/171795621/scorableItem/1",key:BCK+"sentence-completion-answer-key.pdf"},
+ {id:"oa-table",label:"British Council · Table Completion · Part 4",url:BCI+"189652254&context=exam#/section/181038775/question/181038772/scorableItem/1",key:BCK+"table-completion-answer-key.pdf"},
+ {id:"oa-flow",label:"IELTS.org · Flow-chart Completion",url:BCI+"189697842&context=exam#/section/181951855/question/181951854/scorableItem/1",key:"https://ielts.org/cdn/computer-delivered-sample-tests-listening/ielts-listening-computer-delivered-flow-chart-completion-answer-key.pdf"}];
+const OFF_HOSTS=/(^|\.)(britishcouncil\.org|idp\.com|ielts\.org|inspera\.com|cambridgeenglish\.org)$/i;
+function okHost(u){try{const h=new URL(u).hostname;return location.protocol!=="file:"&&u.startsWith("https://")&&OFF_HOSTS.test(h)}catch(e){return false}}
+/* v3.4: kho đề chính thức do Apps Script của bố mẹ tải về mỗi tuần – app tự chấm, không cần AI */
+async function loadKho(force){if(!S||!S.settings)return;const u=S.settings.webhookUrl,t=S.settings.webhookToken;if(!u||!t||!/^https:/.test(u))return;if(!force&&S.khoAt===dayKey())return;
+  try{const r=await fetch(u+(u.includes("?")?"&":"?")+"action=tests&token="+encodeURIComponent(t));if(!r.ok)return;const j=await r.json();
+    if(Array.isArray(j.items)){S.khoTests=j.items.filter(x=>x&&okHost(x.url||"")&&okHost(x.key||"")&&Array.isArray(x.answers)&&x.answers.length>=3).map(x=>({id:String(x.id),label:String(x.label||"Đề chính thức").slice(0,100),url:String(x.url),key:String(x.key),answers:x.answers.slice(0,40).map(a=>Object.assign({q:+a.q,a:String(a.a).slice(0,80)},a.g?{g:String(a.g)}:{}))}));S.khoAt=dayKey();S.khoUpdated=j.updated||"";save()}}catch(e){}}
+setTimeout(()=>{try{loadKho()}catch(e){}},4000);
+function wNum_(s){const W={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};return s.replace(/\b[a-z]+\b/g,w=>W[w]!=null?String(W[w]):w)}
+function nz_(s){return wNum_(String(s||"").toLowerCase().replace(/[’`]/g,"'").replace(/[^a-z0-9'%:.\- ]/g," ").replace(/\s+/g," ").trim().replace(/\.$/,""))}
+function keyAlts_(k){const out=[];String(k).split(/\s*\/\s*|\s+or\s+|\s*;\s*/i).forEach(p=>{[p.replace(/[()\[\]]/g,""),p.replace(/\([^)]*\)|\[[^\]]*\]/g,"")].forEach(x=>{x=nz_(x);if(x&&!out.includes(x))out.push(x)})});return out}
+function okAns_(st,k){const s=nz_(st);if(!s)return false;return keyAlts_(k).some(a=>a===s||a.replace(/ /g,"")===s.replace(/ /g,""))}
+function localGrade(it,A){const K=it.answers.slice().sort((a,b)=>a.q-b.q);const items=K.map((k,i)=>({q:k.q,student:A[i]||"",key:k.a,correct:false,g:k.g}));
+  const groups={};items.forEach((x,i)=>{if(x.g)(groups[x.g]=groups[x.g]||[]).push(i)});
+  items.forEach(x=>{if(!x.g)x.correct=okAns_(x.student,x.key)});
+  Object.values(groups).forEach(ix=>{const keys=ix.map(i=>nz_(items[i].key)),used=[];ix.forEach(i=>{const s=nz_(items[i].student);const j=keys.findIndex((k,jj)=>k===s&&!used.includes(jj));if(j>=0){used.push(j);items[i].correct=true}})});
+  return {items:items.map(x=>({q:x.q,student:x.student,key:x.key,correct:x.correct})),note:"",local:true}}
+function gradable(it){return !!(it&&((it.answers&&it.answers.length>=3)||aiOK()))}
+/* tự tìm đề chính thức mới mỗi tuần (cần khoá AI) */
+async function autoDiscover(force){
+  if(!aiOK()||(S.khoTests||[]).length)return;const last=S.discoverAt||"";if(!force&&last&&daysBetween(last,dayKey())<7)return;
+  S.discoverAt=dayKey();save();const sample=await getSample();if(!sample)return;
+  const known=officialItems().map(x=>x.url.split("#")[0]).concat(officialItems().map(x=>x.key));
+  const prompt=`Search the official IELTS websites (takeielts.britishcouncil.org, ielts.idp.com, ielts.org) for FREE official IELTS Listening practice tests or sample tasks that have BOTH (a) a link where a student can take/listen to the test online and (b) an official answer key link (PDF or page). Skip anything in this list: ${JSON.stringify(known)}.
+Only include links you actually saw in search results or fetched pages, on those official domains (the test link may be on ielts.inspera.com). Reply with JSON only: {"tests":[{"label":"short English name of the task","url":"test link","key":"answer key link","part":1-4 or 0}]}. If nothing new, reply {"tests":[]}.`;
+  try{const r=await sample.json([{role:"user",content:prompt}],{modelTier:"default",maxTokens:3000,tools:[{type:"web_search_20250305",name:"web_search",max_uses:4,allowed_domains:["takeielts.britishcouncil.org","ielts.idp.com","ielts.org"]},{type:"web_fetch_20250910",name:"web_fetch",max_uses:4,allowed_domains:["takeielts.britishcouncil.org","ielts.idp.com","ielts.org"]}]});
+    const add=(r&&Array.isArray(r.tests)?r.tests:[]).filter(t=>t&&okHost(t.url||"")&&okHost(t.key||"")&&!known.includes(String(t.key))).slice(0,10).map(t=>({id:"auto-"+String(t.key).replace(/[^a-z0-9]/gi,"").slice(-40),label:"Đề chính thức · "+String(t.label||"Listening").slice(0,80),url:String(t.url),key:String(t.key),part:+t.part||0,src:"auto"}));
+    if(add.length){S.autoTests=(S.autoTests||[]).concat(add.filter(a=>!(S.autoTests||[]).some(b=>b.id===a.id)));save()}
+    S.discoverLog=(S.discoverLog||[]).concat([{date:dayKey(),found:add.length}]).slice(-20);save();
+  }catch(e){}
+}
+function aiOK(){return !!((S.settings&&S.settings.apiKey)||(window.claude&&window.claude.use))}
+function officialItems(){const L=OFFICIAL_AUTO.map(x=>Object.assign({},x)),base=u=>String(u||"").split("#")[0];
+  (S.khoTests||[]).forEach(k=>{const m=L.find(o=>o.key===k.key||base(o.url)===base(k.url));if(m){if(!m.answers)m.answers=k.answers}else L.push(Object.assign({},k))});
+  (S.extraTests||[]).concat(S.autoTests||[]).forEach(x=>{if(x&&x.key&&x.url&&!L.some(o=>o.id===x.id||o.key===x.key||base(o.url)===base(x.url)))L.push(x)});return L.filter(gradable)}
+function officialNext(){const d=S.offDone||[],L=officialItems();const fresh=L.find(x=>!d.includes(x.id));if(fresh)return fresh;
+  const last={};S.sessions.forEach(s=>{if(s.details&&s.details.offId)last[s.details.offId]=s.date});
+  const old=L.filter(x=>last[x.id]&&daysBetween(last[x.id],dayKey())>=30).sort((a,b)=>last[a.id]<last[b.id]?-1:1)[0];return old?Object.assign({},old,{again:true}):null}
+async function aiGradeOfficial(it,A){const sample=await getSample();if(!sample)return null;
+  const msg=`Official IELTS answer key (PDF): ${it.key}
+Use the web_fetch tool to open that answer key. The student did this official IELTS listening task (${it.label}) and typed these answers in the order of the questions: ${JSON.stringify(A.map((a,i)=>({order:i+1,student:a})))}.
+Match the answers to the questions in order (the first question in the key is order 1). Mark with official IELTS rules: not case-sensitive; spelling must be exact; words in brackets are optional; "/" means alternatives; numbers may be digits or words; for multiple choice the letter must match; for "choose TWO" questions the letters may be in either order.
+Reply with JSON only: {"items":[{"q":<question number as printed in the key>,"student":"...","key":"<official answer>","correct":true}],"note":"one short Vietnamese sentence if anything was unclear, else empty"}. Include every question in the key, even if the student left it blank.`;
+  try{const r=await sample.json([{role:"user",content:msg}],{modelTier:"default",maxTokens:3000,tools:[{type:"web_fetch_20250910",name:"web_fetch",max_uses:2,allowed_domains:["takeielts.britishcouncil.org","ielts.idp.com","ielts.org"]}]});
+    if(!r||!Array.isArray(r.items)||!r.items.length)return null;return r}catch(e){return null}}
+function officialRoom(it){
+  if(!(session&&session.type==="listening"))beginSession("listening");const N=10,desk=innerWidth>=900;if(desk)main.style.maxWidth="min(1400px,96vw)";
+  main.innerHTML=`${sessionHead("Đề chính thức")}<div style="display:${desk?"grid":"block"};grid-template-columns:62% 1fr;gap:12px;align-items:start">
+   <div><div class="row" style="justify-content:space-between;margin-bottom:6px;gap:6px"><span class="small"><b>${esc(it.label)}</b></span><button class="btn ghost small" id="ofPop">Trang đề không hiện? Mở riêng</button></div>
+   <iframe id="ofFrame" title="Trang đề chính thức" src="${esc(it.url)}" allow="autoplay" style="width:100%;height:${desk?"74vh":"52vh"};border:1px solid var(--line);border-radius:10px;background:#fff"></iframe></div>
+   <div class="panel" style="margin:${desk?"0":"12px 0 0"}"><p class="small" style="margin:0 0 8px">Nghe <b>1 lần</b> trên trang đề, gõ đáp án vào đây <b>theo thứ tự câu hỏi</b> (câu nào không có thì để trống). Trắc nghiệm: gõ chữ cái A, B, C…</p>
+   ${Array.from({length:N},(_,k)=>`<div class="q" style="display:flex;gap:8px;align-items:center;margin:4px 0"><span class="qn">${k+1}</span><input type="text" id="of${k}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`).join("")}
+   <button class="btn teal" id="ofDone" style="width:100%;justify-content:center;margin-top:8px">Nộp bài – cô chấm theo đáp án chính thức</button></div></div>`;
+  bindQuit();
+  $("#ofPop").onclick=()=>{const w=Math.round(screen.availWidth*0.6);window.open(it.url,"deThi",desk?`left=0,top=0,width=${w},height=${screen.availHeight}`:"")};
+  $("#ofDone").onclick=async()=>{const ans=Array.from({length:N},(_,k)=>$("#of"+k).value.trim());if(!ans.some(Boolean)){toast("Con chưa gõ đáp án nào.");return}
+    const last=ans.reduce((a,x,i)=>x?i:a,-1),A=ans.slice(0,last+1),b=$("#ofDone");b.disabled=true;b.textContent="⏳ Cô đang mở đáp án chính thức và chấm…";
+    const r=it.answers&&it.answers.length>=3?localGrade(it,A):await aiGradeOfficial(it,A);
+    if(!r){toast("Cô chưa mở được đáp án chính thức. Con kiểm tra mạng rồi bấm Nộp lại nhé.");const bb=$("#ofDone");if(bb){bb.disabled=false;bb.textContent="Nộp bài – cô chấm theo đáp án chính thức"}return}
+    officialReasons(it,r)};
+  say("Listen once on the official test, and type your answers here in order.","Con nghe một lần trên trang đề, gõ đáp án vào phiếu theo thứ tự câu nhé.");
+}
+function officialReasons(it,r,onFinish){
+  main.style.maxWidth="";const items=r.items,W=items.map((x,i)=>x.correct===false?i:null).filter(i=>i!=null),why={},rs={},correct=items.filter(x=>x.correct===true).length,total=items.length;
+  const finish=()=>{if(!onFinish)S.offDone=(S.offDone||[]).concat([it.id]);camSave({online:false,exam:true,short:true,part:0},onFinish?it.label:`Đề chính thức · ${it.label}`,correct,total,W.map(i=>({q:items[i].q,a:items[i].student||"",fix:String(items[i].key||""),why:ERR_TYPES[why[i]]||"",rs:(rs[i]||"").trim()})),{verify:r.local?"auto":"ai",official:!onFinish,book:!!onFinish,offId:it.id});onFinish&&onFinish()};
+  if(!W.length){finish();return}
+  const draw=()=>{main.innerHTML=`${sessionHead("Câu sai và lý do")}<div class="panel"><div class="banner ok">✔ Cô đã chấm theo <b>${onFinish?"đáp án của sách":"đáp án chính thức"}</b>: <b>${correct}/${total}</b> câu đúng.${r.note?" "+esc(r.note):""}</div>
+    ${W.map(i=>{const x=items[i];return `<div class="q" style="border-top:1px solid var(--line);padding:10px 0"><p class="small" style="margin:0 0 6px"><span class="qn">${esc(x.q)}</span> Con viết: <b>${esc(x.student||"(trống)")}</b> · Đáp án chính thức: <b>${esc(x.key||"")}</b></p>
+      <input type="text" data-rs="${i}" placeholder="Vì sao con chọn như vậy? (VD: nghe fifteen tưởng là fifty)" value="${esc(rs[i]||"")}">
+      <div class="row" style="margin-top:6px;gap:6px">${ERR_TYPES.map((t,j)=>`<button class="chip" data-why="${i}:${j}" aria-pressed="${why[i]===j}">${t}</button>`).join("")}</div></div>`}).join("")}
+    <div class="row" style="margin-top:12px"><button class="btn teal" id="ofSave">Lưu kết quả</button></div></div>`;
+    bindQuit();
+    main.querySelectorAll("[data-rs]").forEach(el=>el.oninput=()=>{rs[+el.dataset.rs]=el.value});
+    main.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const[i,j]=b.dataset.why.split(":").map(Number);why[i]=j;draw()});
+    $("#ofSave").onclick=()=>{const miss=W.filter(i=>why[i]==null||(rs[i]||"").trim().length<4).map(i=>items[i].q);if(miss.length){toast(`Câu ${miss.join(", ")}: chọn loại lỗi và viết vì sao con chọn đáp án đó nhé.`);return}finish()};
+  };
+  draw();scrollTo(0,0);say("Now look at each mistake. Why did you choose that answer?","Giờ con xem lại từng câu sai và viết vì sao con chọn như vậy nhé.");
+}
+/* v3.5: Sách Cambridge của nhà – nhập PDF + MP3 từ máy vào bộ nhớ của app (IndexedDB), không đưa lên mạng; app tự chấm */
+const PDFJS_BASE="";
+let _pdfjs=null,_fflate=null;const FFLATE_SRC="fflate.min.js";
+function loadFflate(){if(_fflate)return _fflate;_fflate=new Promise((res,rej)=>{if(window.fflate)return res(window.fflate);const sc=document.createElement("script");sc.src=FFLATE_SRC;sc.onload=()=>window.fflate?res(window.fflate):rej("fflate");sc.onerror=()=>{_fflate=null;rej("fflate")};document.head.appendChild(sc)});return _fflate}
+async function unzipBook(file,onMsg){const ff=await loadFflate(),u8=new Uint8Array(await file.arrayBuffer());onMsg&&onMsg("Đang giải nén…");
+  const ents=await new Promise((res,rej)=>ff.unzip(u8,{filter:f=>!/(^|\/)(__MACOSX|\._)/.test(f.name)&&/\.(pdf|mp3|m4a|wav|aac|zip)$/i.test(f.name)},(e,d)=>e?rej(e):res(d)));
+  let out=[];for(const [name,data] of Object.entries(ents)){const base=name.split("/").pop();if(/\.zip$/i.test(base)){try{out=out.concat(await unzipBook(new File([data],base),onMsg))}catch(e){}}else out.push(new File([data],base,{type:/\.pdf$/i.test(base)?"application/pdf":"audio/mpeg"}))}
+  return out}
+function loadPdfJs(){if(_pdfjs)return _pdfjs;_pdfjs=new Promise((res,rej)=>{if(window.pdfjsLib)return res(window.pdfjsLib);const sc=document.createElement("script");sc.src=PDFJS_BASE+"pdf.min.js";sc.onload=()=>{try{pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_BASE+"pdf.worker.min.js";res(pdfjsLib)}catch(e){rej(e)}};sc.onerror=()=>{_pdfjs=null;rej("pdfjs")};document.head.appendChild(sc)});return _pdfjs}
+function bdb(){return new Promise((res,rej)=>{if(!window.indexedDB)return rej("noidb");const r=indexedDB.open("ielts-books",1);r.onupgradeneeded=()=>r.result.createObjectStore("f");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function bPut(k,v){const db=await bdb();await new Promise((res,rej)=>{const t=db.transaction("f","readwrite");t.objectStore("f").put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+async function bGet(k){try{const db=await bdb();return await new Promise(res=>{const r=db.transaction("f").objectStore("f").get(k);r.onsuccess=()=>res(r.result||null);r.onerror=()=>res(null)})}catch(e){return null}}
+async function bDel(prefix){try{const db=await bdb();await new Promise(res=>{const st=db.transaction("f","readwrite").objectStore("f");const c=st.openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return res();if(String(x.key).startsWith(prefix))x.delete();x.continue()};c.onerror=()=>res()})}catch(e){}}
+function parseKeyLines(lines){
+  const out=[],seen={},put=(q,a,g)=>{q=+q;a=String(a||"").trim().replace(/\s+/g," ");if(!(q>=1&&q<=40)||!a||seen[q]||/^(questions?|part)\b/i.test(a))return;seen[q]=1;out.push(g?{q,a,g}:{q,a})};
+  for(let i=0;i<lines.length;i++){const L=lines[i].trim();if(!L)continue;
+    let m=L.match(/^(\d{1,2})\s*(?:[-–&,]|and)\s*(\d{1,2})\s*[.):]?\s+(.+)$/i);
+    if(m){const lt=(m[3].match(/\b[A-I]\b/g)||[]);if(lt.length>=2){put(m[1],lt[0],m[1]+"-"+m[2]);put(m[2],lt[1],m[1]+"-"+m[2]);continue}}
+    m=L.match(/^(\d{1,2})\s*[.):]?\s+(.+)$/);if(m){put(m[1],m[2]);continue}
+    if(/^\d{1,2}$/.test(L)&&lines[i+1]&&!/^\d{1,2}$/.test(lines[i+1].trim())){put(L,lines[i+1]);i++}}
+  return out.sort((a,b)=>a.q-b.q)}
+async function pdfReadText(file,onProg){
+  const lib=await loadPdfJs(),buf=await file.arrayBuffer(),doc=await lib.getDocument({data:new Uint8Array(buf)}).promise,pages=[];
+  for(let p=1;p<=doc.numPages;p++){const pg=await doc.getPage(p),vp=pg.getViewport({scale:1}),tc=await pg.getTextContent(),mid=vp.width/2;
+    const items=tc.items.filter(it=>it.str&&it.str.trim()).map(it=>({x:it.transform[4],y:it.transform[5],s:it.str}));
+    const L=items.filter(i=>i.x<mid-8),R=items.filter(i=>i.x>=mid-8);
+    const two=L.length>4&&R.length>4&&R.filter(i=>/^\d{1,2}\b/.test(i.s.trim())).length>=3;
+    const toLines=arr=>{const ls=[];arr.sort((a,b)=>b.y-a.y||a.x-b.x).forEach(i=>{const c=ls[ls.length-1];if(c&&Math.abs(c.y-i.y)<3)c.s+=(/\s$/.test(c.s)?"":" ")+i.s;else ls.push({y:i.y,s:i.s})});return ls.map(l=>l.s.replace(/\s+/g," ").trim())};
+    pages.push(two?toLines(L).concat(toLines(R)):toLines(items));onProg&&onProg(p,doc.numPages)}
+  return pages}
+function analyseBook(pages){
+  const T={};const isKeyPage=ls=>ls.some(l=>/answer keys?/i.test(l));
+  let keyStart=-1;for(let p=Math.floor(pages.length*0.4);p<pages.length;p++){if(isKeyPage(pages[p])&&pages[p].some(l=>/listening/i.test(l))){keyStart=p;break}}
+  const qEnd=keyStart>0?keyStart:pages.length;
+  for(let n=1;n<=4;n++){const st=pages.slice(0,qEnd).findIndex(ls=>ls.slice(0,12).some(l=>new RegExp("^test\\s*"+n+"\\b","i").test(l))&&ls.some(l=>/^listening\b/i.test(l))&&ls.some(l=>/part\s*1\b|section\s*1\b/i.test(l)));
+    let en=-1;if(st>=0){for(let p=st+1;p<qEnd;p++){if(pages[p].slice(0,12).some(l=>/^reading\b/i.test(l)||/reading passage 1/i.test(l))){en=p-1;break}}if(en<0)en=Math.min(st+5,qEnd-1)}
+    T[n]={pages:st>=0?[st+1,en+1]:[0,0],key:[]}}
+  if(keyStart>=0){const all=[];for(let p=keyStart;p<Math.min(pages.length,keyStart+12);p++)all.push(...pages[p]);
+    let cur=0,inL=false;const seg={1:[],2:[],3:[],4:[]};
+    all.forEach(l=>{let m=l.match(/^test\s*([1-4])\b/i);if(m){cur=+m[1];inL=/listening/i.test(l);return}if(/^listening\b/i.test(l)){inL=true;return}if(/^reading\b/i.test(l)||/^writing\b/i.test(l)){inL=false;return}if(cur&&inL)seg[cur].push(l)});
+    for(let n=1;n<=4;n++)T[n].key=parseKeyLines(seg[n])}
+  return T}
+function audioSlot(name){const s=name.toLowerCase();let m=s.match(/test\s*_?0?([1-4])\D{0,12}?(?:part|section|sec|p)\s*_?0?([1-4])/);if(m)return m[1]+"-"+m[2];m=s.match(/\bt\s*0?([1-4])\s*[-_ ]?\s*p\s*0?([1-4])\b/);if(m)return m[1]+"-"+m[2];m=s.match(/(?:^|\D)([1-4])[-_. ]([1-4])(?:\D|$)/);if(m)return m[1]+"-"+m[2];return null}
+function bookList(){return S.books||[]}
+function bookNext(){const have=myBookFiles();for(const b of bookList()){if(!have.includes(b.n))continue;const pr=(S.bookProg||{})[b.n]||{t:1,p:1};if(pr.t<=4)return {b,t:pr.t,p:pr.p}}return null}
+async function renderBookImport(){
+  main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">📗 Nhập sách Cambridge</h2><button class="btn ghost small" id="bk">← Bố mẹ</button></div>
+  <div class="panel"><p class="small">Chọn file sách <b>có bản quyền</b> trên máy này. Sách được lưu <b>trong bộ nhớ của app trên máy này</b>, không gửi lên mạng hay GitHub. Máy nào con dùng thì nhập trên máy đó.</p>
+  <label class="f" for="bkN">Sách số mấy? (ví dụ 18)</label><input type="number" id="bkN" min="1" max="30" inputmode="numeric" style="max-width:120px">
+  <label class="f">Cách 1 (dễ nhất): chọn <b>file nén .zip</b> của sách</label><input type="file" id="bkZip" accept=".zip,application/zip">
+  <label class="f">Cách 2: file nén dạng .rar? Giải nén ra thư mục, rồi chọn <b>cả thư mục</b> đó</label><input type="file" id="bkDir" webkitdirectory directory multiple>
+  <details style="margin-top:8px"><summary class="small">Cách 3: chọn riêng file PDF và các file MP3</summary>
+  <label class="f">File PDF của sách</label><input type="file" id="bkPdf" accept="application/pdf,.pdf">
+  <label class="f">Các file audio Listening (chọn tất cả cùng lúc)</label><input type="file" id="bkMp3" accept="audio/*,.mp3,.m4a" multiple></details>
+  <div class="row" style="margin-top:12px"><button class="btn teal" id="bkGo">Đọc sách</button></div><p class="small muted" id="bkMsg"></p></div>`;
+  $("#bk").onclick=()=>renderParent();
+  const guessN=f=>{const m=String(f&&f.name||"").match(/(?:ielts|cambridge|cam)\D{0,6}(\d{1,2})/i)||String(f&&f.name||"").match(/(\d{1,2})/);if(m&&!$("#bkN").value)$("#bkN").value=m[1]};
+  $("#bkZip").onchange=e=>guessN(e.target.files[0]);$("#bkDir").onchange=e=>{const f=e.target.files[0];if(f)guessN({name:(f.webkitRelativePath||f.name).split("/")[0]})};$("#bkPdf").onchange=e=>guessN(e.target.files[0]);
+  $("#bkGo").onclick=async()=>{const n=parseInt($("#bkN").value),msg=$("#bkMsg");let all=[];
+    try{if($("#bkZip").files[0])all=await unzipBook($("#bkZip").files[0],t=>msg.textContent=t);else if($("#bkDir").files.length)all=[...$("#bkDir").files].filter(f=>!/^\._/.test(f.name));else all=[...$("#bkPdf").files,...$("#bkMp3").files]}catch(e){msg.textContent="Không giải nén được file này ("+String(e).slice(0,50)+"). Nếu là file .rar, hãy giải nén ra thư mục rồi dùng Cách 2.";return}
+    const pdfs=all.filter(f=>/\.pdf$/i.test(f.name)).sort((a,b)=>b.size-a.size),mp3=all.filter(f=>/\.(mp3|m4a|wav|aac)$/i.test(f.name));
+    if(!(n>=1)){toast("Nhập số của sách.");return}if(!pdfs.length){msg.textContent="Không thấy file PDF nào trong file đã chọn.";return}if(!mp3.length){msg.textContent="Không thấy file audio (MP3) nào trong file đã chọn.";return}
+    const pdf=pdfs[0];let T;
+    try{let pages=[];for(const [i,f] of pdfs.slice(0,3).entries()){const pg=await pdfReadText(f,(p,t)=>{msg.textContent=`Đang đọc PDF ${i+1}/${Math.min(3,pdfs.length)}: trang ${p}/${t}`});if(i===0)pages=pg;else pages=pages.concat(pg)}
+      T=analyseBook(pages);T._n=pages.length}catch(e){msg.textContent="Không đọc được PDF ("+String(e).slice(0,60)+"). Kiểm tra mạng rồi thử lại.";return}
+    const files=mp3.slice().sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})),map={};
+    files.forEach(f=>{const k=audioSlot(f.name);if(k&&map[k]==null)map[k]=files.indexOf(f)});
+    if(Object.keys(map).length<4){let i=0;for(let t=1;t<=4;t++)for(let p=1;p<=4;p++){const k=t+"-"+p;if(map[k]==null&&i<files.length)map[k]=i++}}
+    bookReview(n,pdf,files,T,map)}}
+function bookReview(n,pdf,files,T,map){
+  const opt=sel=>`<option value="">(không có)</option>`+files.map((f,i)=>`<option value="${i}" ${+sel===i&&sel!==""&&sel!=null?"selected":""}>${esc(f.name)}</option>`).join("");
+  main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">📗 Cambridge ${n}: kiểm tra</h2><button class="btn ghost small" id="bk">← Quay lại</button></div>
+  <p class="small muted">App đã đọc ${T._n} trang. Bố mẹ xem nhanh các ô dưới; chỗ nào app đoán sai thì sửa rồi bấm Lưu.</p>
+  ${[1,2,3,4].map(t=>`<div class="panel"><h3 style="margin-top:0">Test ${t}</h3>
+    <label class="small">Trang đề Listening (số trang trong file PDF): từ <input type="number" id="pf${t}" value="${T[t].pages[0]||""}" style="max-width:80px"> đến <input type="number" id="pt${t}" value="${T[t].pages[1]||""}" style="max-width:80px"></label>
+    <p class="small" style="margin:8px 0 4px">Đáp án Listening: <b style="color:${T[t].key.length>=38?"var(--good)":"var(--rose)"}">${T[t].key.length}/40 câu</b> đọc được. Mỗi dòng: <code>số câu  đáp án</code>.</p>
+    <textarea id="k${t}" style="min-height:110px;font-family:monospace">${esc(T[t].key.map(k=>k.q+" "+k.a+(k.g?" #"+k.g:"")).join("\n"))}</textarea>
+    ${[1,2,3,4].map(p=>`<label class="small" style="display:block;margin-top:4px">Audio Part ${p}: <select id="a${t}-${p}">${opt(map[t+"-"+p])}</select></label>`).join("")}</div>`).join("")}
+  <div class="row"><button class="btn teal" id="bkSave">Lưu sách vào app</button></div><p class="small muted" id="bkMsg"></p>`;
+  $("#bk").onclick=()=>renderBookImport();
+  $("#bkSave").onclick=async()=>{const msg=$("#bkMsg"),b={n,added:dayKey(),tests:{}};
+    for(let t=1;t<=4;t++){const key=parseKeyLines($("#k"+t).value.split(/\n/).map(l=>l.replace(/\s+#(\S+)$/,"")));
+      $("#k"+t).value.split(/\n/).forEach(l=>{const m=l.match(/^(\d{1,2})\s.*#(\S+)$/);if(m){const k=key.find(x=>x.q===+m[1]);if(k)k.g=m[2]}});
+      b.tests[t]={pages:[+$("#pf"+t).value||0,+$("#pt"+t).value||0],key,audio:{}};
+      if(key.length<10){toast(`Test ${t}: mới có ${key.length} đáp án. Kiểm tra lại ô đáp án nhé.`);return}}
+    try{msg.textContent="Đang lưu PDF…";await bDel("b"+n+"-");await bPut("b"+n+"-pdf",pdf);
+      for(let t=1;t<=4;t++)for(let p=1;p<=4;p++){const v=$(`#a${t}-${p}`).value;if(v!==""){msg.textContent=`Đang lưu audio Test ${t} Part ${p}…`;await bPut(`b${n}-a-${t}-${p}`,files[+v]);b.tests[t].audio[p]=1}}
+    }catch(e){msg.textContent="Máy không đủ chỗ lưu hoặc trình duyệt chặn lưu. Thử giải phóng bộ nhớ rồi lưu lại.";return}
+    S.books=bookList().filter(x=>x.n!==n).concat([b]).sort((a,c)=>a.n-c.n);S.bookProg=S.bookProg||{};if(!S.bookProg[n])S.bookProg[n]={t:1,p:1};setBookFiles(myBookFiles().concat([n]));save();syncSoon();
+    toast(`Đã lưu Cambridge ${n}. Con sẽ thấy ở Bước 4.`);renderParent()}}
+function bookPanel(){const L=bookList();return `<div class="panel"><h3 style="margin-top:0">📗 Sách Cambridge của nhà</h3>${L.length?`<p class="small">${L.map(b=>{const pr=(S.bookProg||{})[b.n]||{t:1,p:1};return `Cambridge ${b.n}: ${pr.t>4?"đã làm hết":`đang ở Test ${pr.t} Part ${pr.p}`}${myBookFiles().includes(b.n)?"":" (chưa có trên máy này – mở app trên máy kia, để 2 máy cạnh nhau cùng Wi-Fi là tự chuyển sang)"}`}).join(" · ")}</p>`:`<p class="small muted">Có sách Cambridge bản quyền (PDF + MP3) trên máy này? Nhập vào để con luyện và app tự chấm.</p>`}<button class="btn small teal" id="bkImp">Nhập sách</button></div>`}
+async function bookRoom(o){
+  const {b,t,p}=o,T=b.tests[t],first=(p-1)*10+1,desk=innerWidth>=900;
+  if(!(session&&session.type==="listening"))beginSession("listening");if(desk)main.style.maxWidth="min(1400px,96vw)";
+  main.innerHTML=`${sessionHead(`Cambridge ${b.n} · Test ${t} · Part ${p}`)}<div style="display:${desk?"grid":"block"};grid-template-columns:62% 1fr;gap:12px;align-items:start">
+   <div id="bkView" style="height:${desk?"74vh":"55vh"};overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff"><p class="small" style="padding:10px;color:#333">Đang mở đề…</p></div>
+   <div class="panel" style="margin:${desk?"0":"12px 0 0"}">
+    <ol class="small" style="margin:0 0 8px;padding-left:18px"><li>Đọc trước câu ${first}–${first+9} trong khung đề (khoảng 30 giây).</li><li>Bấm nghe – <b>chỉ được nghe 1 lần</b>, vừa nghe vừa gõ đáp án.</li><li>Bấm Nộp bài, cô chấm theo đáp án của sách.</li></ol>
+    <button class="btn teal" id="bkPlay" style="width:100%;justify-content:center">▶ Nghe Part ${p} (1 lần)</button>
+    ${Array.from({length:10},(_,k)=>`<div class="q" style="display:flex;gap:8px;align-items:center;margin:4px 0"><span class="qn">${first+k}</span><input type="text" id="bq${k}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`).join("")}
+    <button class="btn teal" id="bkDone" style="width:100%;justify-content:center;margin-top:8px">Nộp bài</button></div></div>`;
+  bindQuit();say(`Cambridge ${b.n}, test ${t}, part ${p}. Read the questions first. You will hear the recording once.`,`Cambridge ${b.n}, Test ${t}, Part ${p}: đọc câu hỏi trước, rồi bấm nghe – chỉ một lần nhé.`);
+  let audio=null,played=false;const blob=await bGet(`b${b.n}-a-${t}-${p}`);
+  $("#bkPlay").onclick=()=>{if(played)return;if(!blob){toast("Chưa có audio cho Part này – bố mẹ nhập lại sách.");return}played=true;audio=new Audio(URL.createObjectURL(blob));session.listening=true;audio.onended=()=>{session&&(session.listening=false);const x=$("#bkPlay");if(x){x.textContent="Đã nghe xong";x.disabled=true}};audio.play().catch(()=>{played=false});const x=$("#bkPlay");x.textContent="🔊 Đang phát… (không dừng được, như thi thật)";x.disabled=true};
+  $("#bkDone").onclick=()=>{const A=Array.from({length:10},(_,k)=>$("#bq"+k).value.trim());if(A.filter(Boolean).length<3){toast("Con mới gõ "+A.filter(Boolean).length+" câu – gõ thêm rồi nộp nhé.");return}
+    try{audio&&audio.pause()}catch(e){}session&&(session.listening=false);
+    const key=T.key.filter(k=>k.q>=first&&k.q<=first+9);if(!key.length){toast("Sách chưa có đáp án Part này – bố mẹ kiểm tra lại ở mục Nhập sách.");return}
+    const byQ=Array.from({length:10},(_,k)=>A[k]);const r=localGrade({answers:key},key.map(k=>byQ[k.q-first]||""));
+    officialReasons({id:`b${b.n}-${t}-${p}`,label:`Cambridge ${b.n} · Test ${t} · Part ${p}`},r,()=>{const pr=S.bookProg[b.n]||{t:1,p:1};pr.p++;if(pr.p>4){pr.p=1;pr.t++}S.bookProg[b.n]=pr;save()})};
+  try{const pdf=await bGet(`b${b.n}-pdf`);if(!pdf)throw "nopdf";const lib=await loadPdfJs(),doc=await lib.getDocument({data:new Uint8Array(await pdf.arrayBuffer())}).promise;
+    const v=$("#bkView");if(!v)return;v.innerHTML="";const [a,z]=T.pages;const from=Math.max(1,a||1),to=Math.min(doc.numPages,z||from+3);
+    for(let pg=from;pg<=to;pg++){const page=await doc.getPage(pg),w=(v.clientWidth||360)-4,vp0=page.getViewport({scale:1}),sc=w/vp0.width*(window.devicePixelRatio||1),vp=page.getViewport({scale:sc});
+      const cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;cv.style.width="100%";cv.style.display="block";cv.style.borderBottom="1px solid #ddd";v.appendChild(cv);await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise}
+  }catch(e){const v=$("#bkView");if(v)v.innerHTML=`<p class="small" style="padding:10px;color:#333">Không mở được trang đề (${esc(String(e).slice(0,40))}). Con mở sách Cambridge ${b.n}, Test ${t}, Part ${p} ở trang ${T.pages[0]||"?"} để đọc câu hỏi.</p>`}
+}
+
+/* v3.6: Đồng bộ 2 máy. Tiến độ học: qua Apps Script của bố mẹ (mọi lúc). Sách Cambridge (file lớn): truyền thẳng máy–máy qua Wi-Fi (WebRTC) khi 2 máy cùng mở app. */
+function devId(){let d="";try{d=localStorage.getItem("ielts-device")||""}catch(e){}if(!d){d=(/iPhone|iPad/.test(navigator.userAgent)?"iphone-":/Mac/.test(navigator.userAgent)?"mac-":"may-")+Math.random().toString(36).slice(2,8);try{localStorage.setItem("ielts-device",d)}catch(e){}}return d}
+function devName(){const u=navigator.userAgent;return /iPhone/.test(u)?"iPhone":/iPad/.test(u)?"iPad":/Mac/.test(u)?"MacBook":/Android/.test(u)?"Android":"Máy tính"}
+function syncOn(){return !!(S&&S.settings&&S.settings.webhookUrl&&S.settings.webhookToken&&/^https:/.test(S.settings.webhookUrl))}
+function gsGet(params){const u=S.settings.webhookUrl;return fetch(u+(u.includes("?")?"&":"?")+new URLSearchParams(Object.assign({token:S.settings.webhookToken},params)).toString()).then(r=>r.json())}
+function gsPost(obj){return fetch(S.settings.webhookUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({token:S.settings.webhookToken,device:devId()},obj))})}
+function syncBanner(msg){let b=document.getElementById("syncBar");if(!msg){if(b)b.remove();return}if(!b){b=document.createElement("div");b.id="syncBar";b.setAttribute("role","status");b.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:60;background:var(--surface);color:var(--ink);border:2px solid var(--teal);border-radius:14px;padding:8px 14px;font-size:.9rem;box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:92vw";document.body.appendChild(b)}b.textContent=msg}
+/* ---- gộp dữ liệu học ---- */
+function uniqBy(a,k){const m=new Map();(a||[]).forEach(x=>{if(x&&x[k]!=null&&!m.has(x[k]))m.set(x[k],x)});return [...m.values()]}
+function uniq(a){return [...new Set((a||[]).filter(x=>x!=null))]}
+function mergeState(L,R){
+  if(!R||typeof R!=="object")return false;const before=JSON.stringify(L);
+  L.sessions=uniqBy((L.sessions||[]).concat(R.sessions||[]),"id").sort((a,b)=>String(a.start||a.date).localeCompare(String(b.start||b.date))).slice(-500);
+  ["webDone","offDone","dayOffs","notFound"].forEach(k=>{if(R[k])L[k]=k==="notFound"?uniqBy((L[k]||[]).concat(R[k]),"label"):uniq((L[k]||[]).concat(R[k]))});
+  L.seen=L.seen||{};Object.entries(R.seen||{}).forEach(([k,v])=>{L.seen[k]=uniq((L.seen[k]||[]).concat(v||[])).slice(-600)});
+  L.customWords=uniqBy((L.customWords||[]).concat(R.customWords||[]),"w").slice(-300);
+  L.redemptions=uniqBy((R.redemptions||[]).filter(r=>r.status!=="pending").concat(L.redemptions||[],R.redemptions||[]),"id");
+  L.reports=uniqBy((L.reports||[]).concat(R.reports||[]),"date");
+  L.levelHistory=uniqBy((L.levelHistory||[]).concat(R.levelHistory||[]),"date");
+  if(R.level&&(!L.level||String(R.level.date)>String(L.level.date)))L.level=R.level;
+  if(R.firstDay&&(!L.firstDay||R.firstDay<L.firstDay))L.firstDay=R.firstDay;
+  L.examPart=Math.max(L.examPart||0,R.examPart||0);
+  if(R.cam&&(!L.cam||(R.cam.book*100+R.cam.test*10+R.cam.part)>(L.cam.book*100+L.cam.test*10+L.cam.part)))L.cam=R.cam;
+  L.bookProg=L.bookProg||{};Object.entries(R.bookProg||{}).forEach(([n,p])=>{const a=L.bookProg[n];if(!a||p.t*10+p.p>a.t*10+a.p)L.bookProg[n]=p});
+  const bm=new Map((L.books||[]).map(b=>[b.n,b]));(R.books||[]).forEach(b=>{const a=bm.get(b.n);const cnt=x=>Object.values(x.tests||{}).reduce((s,t)=>s+(t.key||[]).length,0);if(!a||cnt(b)>cnt(a))bm.set(b.n,Object.assign({},b,{tests:Object.fromEntries(Object.entries(b.tests||{}).map(([t,v])=>[t,Object.assign({},v,{audio:(a&&a.tests&&a.tests[t]&&a.tests[t].audio)||{}})]))}))});L.books=[...bm.values()].sort((a,b)=>a.n-b.n);
+  L.camErr=L.camErr||{};Object.entries(R.camErr||{}).forEach(([k,v])=>{L.camErr[k]=Math.max(L.camErr[k]||0,v)});
+  L.flags=Object.assign({},R.flags||{},L.flags||{});
+  L.wrong=Object.assign({},R.wrong||{},L.wrong||{});L.learned=Object.assign({},R.learned||{},L.learned||{});
+  ["khoTests","autoTests"].forEach(k=>{if(R[k])L[k]=uniqBy((L[k]||[]).concat(R[k]),"id")});
+  const sum=L.sessions.reduce((a,s)=>a+(s.stickers||0),0);L.stickers=L.stickers||{earned:0,spent:0};L.stickers.earned=Math.max(L.stickers.earned||0,(R.stickers||{}).earned||0,sum);L.stickers.spent=Math.max(L.stickers.spent||0,(R.stickers||{}).spent||0);
+  if(R.settings&&(R.settingsAt||0)>(L.settingsAt||0)){const keep={webhookUrl:L.settings.webhookUrl,webhookToken:L.settings.webhookToken};L.settings=Object.assign({},L.settings,R.settings,keep);L.settingsAt=R.settingsAt}
+  return JSON.stringify(L)!==before}
+let syncBusy=false,syncT=null;
+function snapshot(){const x=clone(S);delete x.outbox;delete x.pendingOpen;delete x.pendingSurvey;return x}
+async function syncState(){if(!syncOn()||syncBusy||navigator.onLine===false)return;syncBusy=true;
+  try{await gsPost({action:"state",name:devName(),state:snapshot()});
+    const j=await gsGet({action:"states",device:devId()});let changed=false;
+    (j.states||[]).forEach(st=>{if(st&&st.device!==devId()&&st.state)changed=mergeState(S,mergeDefaults(st.state))||changed});
+    if(changed){persistLocal();if(!session&&!welcomeOpen&&!busyTyping())render();toast("Đã đồng bộ bài học với máy còn lại.")}
+    S.syncAt=Date.now();persistLocal();
+  }catch(e){}syncBusy=false}
+function syncSoon(){clearTimeout(syncT);syncT=setTimeout(syncState,4000)}
+/* ---- truyền sách máy–máy qua Wi-Fi ---- */
+function myBookFiles(){try{return JSON.parse(localStorage.getItem("ielts-bookfiles")||"[]")}catch(e){return []}}
+function setBookFiles(a){try{localStorage.setItem("ielts-bookfiles",JSON.stringify(uniq(a)))}catch(e){}}
+function bookUnfinished(n){const p=(S.bookProg||{})[n];return !p||p.t<=4}
+const LAN={pc:null,dc:null,peer:null,poll:null,state:"idle",last:0,recv:null};
+function lanNeeds(peer){const mine=myBookFiles(),theirs=peer.books||[];return mine.some(n=>!theirs.includes(n)&&bookUnfinished(n))||theirs.some(n=>!mine.includes(n)&&bookUnfinished(n))}
+async function lanTick(){
+  if(!syncOn()||document.visibilityState!=="visible")return;
+  try{await gsPost({action:"presence",name:devName(),books:myBookFiles()});
+    const j=await gsGet({action:"peers",device:devId()});
+    (j.signals||[]).forEach(m=>lanSignal(m));
+    const now=Date.now(),peer=(j.peers||[]).filter(p=>p.device!==devId()&&now-p.t<90000).sort((a,b)=>b.t-a.t)[0];
+    if(peer&&LAN.state==="idle"&&lanNeeds(peer)&&devId()<peer.device)lanStart(peer);
+    const fast=LAN.state!=="idle"||(peer&&lanNeeds(peer));clearTimeout(LAN.poll);LAN.poll=setTimeout(lanTick,fast?2500:30000);
+  }catch(e){clearTimeout(LAN.poll);LAN.poll=setTimeout(lanTick,30000)}}
+function lanReset(){try{LAN.dc&&LAN.dc.close()}catch(e){}try{LAN.pc&&LAN.pc.close()}catch(e){}Object.assign(LAN,{pc:null,dc:null,peer:null,state:"idle",recv:null});syncBanner("")}
+function newPC(){const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});pc.onconnectionstatechange=()=>{if(["failed","closed"].includes(pc.connectionState))lanReset()};return pc}
+function iceDone(pc){return new Promise(res=>{if(pc.iceGatheringState==="complete")return res();const f=()=>{if(pc.iceGatheringState==="complete"){pc.removeEventListener("icegatheringstatechange",f);res()}};pc.addEventListener("icegatheringstatechange",f);setTimeout(res,3000)})}
+async function lanStart(peer){if(!window.RTCPeerConnection)return;LAN.state="offer";LAN.peer=peer.device;const pc=newPC();LAN.pc=pc;const dc=pc.createDataChannel("sach",{ordered:true});lanWire(dc);
+  await pc.setLocalDescription(await pc.createOffer());await iceDone(pc);await gsPost({action:"signal",to:peer.device,data:{type:"offer",sdp:pc.localDescription.sdp}});
+  setTimeout(()=>{if(LAN.state==="offer")lanReset()},60000)}
+async function lanSignal(m){try{if(!m||!m.data)return;
+  if(m.data.type==="offer"&&LAN.state==="idle"){LAN.state="answer";LAN.peer=m.from;const pc=newPC();LAN.pc=pc;pc.ondatachannel=e=>lanWire(e.channel);
+    await pc.setRemoteDescription({type:"offer",sdp:m.data.sdp});await pc.setLocalDescription(await pc.createAnswer());await iceDone(pc);
+    await gsPost({action:"signal",to:m.from,data:{type:"answer",sdp:pc.localDescription.sdp}});setTimeout(()=>{if(LAN.state==="answer")lanReset()},60000)}
+  else if(m.data.type==="answer"&&LAN.state==="offer"&&m.from===LAN.peer){await LAN.pc.setRemoteDescription({type:"answer",sdp:m.data.sdp})}}catch(e){lanReset()}}
+function lanWire(dc){LAN.dc=dc;dc.binaryType="arraybuffer";dc.bufferedAmountLowThreshold=1024*1024;
+  dc.onopen=()=>{LAN.state="open";syncBanner("🔗 Đã nối với máy bên cạnh qua Wi-Fi…");dc.send(JSON.stringify({t:"have",books:myBookFiles(),meta:S.books||[]}))};
+  dc.onclose=()=>lanReset();let q=Promise.resolve();dc.onmessage=e=>{const d=e.data;q=q.then(()=>lanMsg(d)).catch(()=>{})}}
+async function lanSend(n){const dc=LAN.dc,b=(S.books||[]).find(x=>x.n===n);if(!dc||!b)return;
+  const keys=["b"+n+"-pdf"];Object.entries(b.tests||{}).forEach(([t,v])=>Object.keys(v.audio||{}).forEach(p=>keys.push(`b${n}-a-${t}-${p}`)));
+  const parts=[];for(const k of keys){const f=await bGet(k);if(f)parts.push({k,f})}
+  const total=parts.reduce((a,x)=>a+x.f.size,0);let sent=0;dc.send(JSON.stringify({t:"book",n,meta:b,total,count:parts.length}));
+  for(const {k,f} of parts){dc.send(JSON.stringify({t:"part",k,size:f.size,type:f.type||"",name:f.name||k}));
+    const CH=Math.min(65536,(LAN.pc&&LAN.pc.sctp&&LAN.pc.sctp.maxMessageSize)||65536);
+    for(let o=0;o<f.size;o+=1048576){const buf=new Uint8Array(await f.slice(o,o+1048576).arrayBuffer());
+      for(let i=0;i<buf.length;i+=CH){if(dc.readyState!=="open")return;if(dc.bufferedAmount>4*1024*1024)await new Promise(r=>{dc.onbufferedamountlow=()=>{dc.onbufferedamountlow=null;r()}});dc.send(buf.subarray(i,i+CH))}
+      sent+=buf.length;syncBanner(`📤 Đang gửi Cambridge ${n} sang máy bên cạnh: ${Math.round(sent/total*100)}%`)}
+    dc.send(JSON.stringify({t:"endpart",k}))}
+  dc.send(JSON.stringify({t:"endbook",n}));syncBanner(`✅ Đã gửi xong Cambridge ${n}.`);setTimeout(()=>syncBanner(""),4000)}
+async function lanMsg(d){const dc=LAN.dc;
+  if(typeof d!=="string"){const r=LAN.recv;if(r&&r.part){r.part.chunks.push(d);r.got+=d.byteLength;if(r.got-r.shown>2*1024*1024){r.shown=r.got;syncBanner(`📥 Đang nhận Cambridge ${r.n} từ máy bên cạnh: ${Math.round(r.got/r.total*100)}%`)}}return}
+  let m;try{m=JSON.parse(d)}catch(e){return}
+  if(m.t==="have"){const mine=myBookFiles();for(const n of mine)if(!(m.books||[]).includes(n)&&bookUnfinished(n))await lanSend(n);
+    if(!(m.books||[]).some(n=>!mine.includes(n)&&bookUnfinished(n)))dc.send(JSON.stringify({t:"done"}));}
+  else if(m.t==="book"){LAN.recv={n:m.n,meta:m.meta,total:m.total||1,got:0,shown:0,part:null};syncBanner(`📥 Đang nhận Cambridge ${m.n} từ máy bên cạnh…`)}
+  else if(m.t==="part"&&LAN.recv){LAN.recv.part={k:m.k,type:m.type,name:m.name,chunks:[]}}
+  else if(m.t==="endpart"&&LAN.recv&&LAN.recv.part){const p=LAN.recv.part;LAN.recv.part=null;try{await bPut(p.k,new File(p.chunks,p.name,{type:p.type}))}catch(e){syncBanner("⚠ Máy này không đủ chỗ để nhận sách.");return}}
+  else if(m.t==="endbook"&&LAN.recv){const r=LAN.recv;const b=r.meta;S.books=(S.books||[]).filter(x=>x.n!==b.n).concat([b]).sort((a,c)=>a.n-c.n);S.bookProg=S.bookProg||{};if(!S.bookProg[b.n])S.bookProg[b.n]={t:1,p:1};save();setBookFiles(myBookFiles().concat([b.n]));
+    LAN.recv=null;syncBanner(`✅ Đã nhận xong Cambridge ${b.n}. Con làm được ngay trên máy này.`);setTimeout(()=>syncBanner(""),5000);if(!session&&!busyTyping())render();
+    const want=(LAN.peerBooks||[]);dc.send(JSON.stringify({t:"got",n:b.n}))}
+  else if(m.t==="done"){setTimeout(()=>{if(!LAN.recv)lanReset()},3000)}}
+function startSync(){if(!syncOn())return;setTimeout(syncState,2500);setTimeout(lanTick,3500)}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&syncOn()){syncState();clearTimeout(LAN.poll);lanTick()}});
+setTimeout(()=>{try{startSync()}catch(e){}},1500);
+
 function examPart(){return ((S.examPart||0)%4)+1}
 async function startExam(){
   const part=examPart();let set=null;const ai=await getSample();
@@ -1572,7 +1875,7 @@ function examReasons(set,res,part){
 }
 function startCambridge(src){
   const c=camNext();
-  if(!src&&!S.camBook){
+  if(!src){S.camBook=false;autoDiscover();loadKho();
     const W=webItems(),w=webNext(),left=W.filter(x=>!webDone().includes(x.id)).length,doneList=S.sessions.filter(s=>s.details&&s.details.kind==="cam"&&s.details.webId).slice(-6).reverse(),part=examPart(),desk=matchMedia("(pointer:fine)").matches&&innerWidth>=900;
     const exam=`<div class="panel" style="border:2px solid var(--teal)"><p class="small muted" style="margin:0">Bước 4 hôm nay</p><h3 style="margin:4px 0">Đề thi Nghe · Part ${part}</h3><p class="small muted" style="margin:0 0 10px">Làm ngay trong app, như thi thật. Không cần mở trang web, không cần chụp ảnh – cô chấm ngay.</p>
       <ol class="small" style="margin:0 0 12px;padding-left:20px"><li>Đọc câu hỏi trước khoảng 30 giây.</li><li>Bấm ▶ Nghe bài, <b>chỉ nghe 1 lần</b>, vừa nghe vừa điền.</li><li>Nộp bài, rồi viết lý do cho từng câu sai.</li></ol>
@@ -1582,19 +1885,20 @@ function startCambridge(src){
       ${canRecord()&&!w.short?`<button class="btn teal" id="recWeb" style="width:100%;justify-content:center;margin-bottom:8px">🔴 Ghi màn hình và làm đề – cô tự chấm</button>`:canRecord()?"":`<button class="btn ghost small" id="recHelp" style="width:100%;justify-content:center;margin-bottom:8px">🔴 Cách bật ghi màn hình trên iPhone</button>`}
       <a class="btn ghost" id="goWeb" href="${w.url}" target="_blank" rel="noopener" style="width:100%;justify-content:center">Mở đề chính thức</a>
       <button class="btn ghost small" id="camLost" style="width:100%;justify-content:center;margin-top:8px">😕 Không tìm thấy đề → làm đề thi trong app</button></div>`;
+    const oi=officialNext(),OL=officialItems(),odone=(S.offDone||[]).length;
+    const off=`<div class="panel"${oi?' style="border:2px solid var(--teal)"':""}><p class="small muted" style="margin:0">Đề thật của British Council</p><h3 style="margin:4px 0">🏛 Đề chính thức · ${oi?esc(oi.label.replace("British Council · ",""))+(oi.again?" (làm lại sau 1 tháng)":""):"đã làm hết"}</h3>
+      ${oi?`<p class="small muted" style="margin:0 0 10px">Mở ngay trong app: trang đề một bên, phiếu trả lời một bên. Cô chấm theo <b>đáp án chính thức</b> – con không cần chụp ảnh hay nhờ bố mẹ. (Còn ${Math.max(0,OL.length-odone)}/${OL.length} đề · kho tự cập nhật đề mới mỗi tuần.)</p><button class="btn teal" id="goOff" style="width:100%;justify-content:center">▶ Làm đề chính thức</button>`:!OL.length?`<p class="small muted" style="margin:0">Kho đề chính thức chưa bật. Bố mẹ bật một lần (miễn phí) theo hướng dẫn “Kho đề chính thức”. Trong lúc chờ, con làm Đề thi Nghe nhé.</p>`:`<p class="small muted" style="margin:0">Con đã làm hết ${OL.length} đề chính thức hiện có. Mỗi tuần cô tự tìm đề mới trên trang chính thức; có đề mới là hiện ở đây. Sau 1 tháng con được làm lại để xem tiến bộ.</p>`}</div>`;
+    const bn=bookNext();
+    const book=bn?`<div class="panel" style="border:2px solid var(--teal)"><p class="small muted" style="margin:0">Sách Cambridge của nhà</p><h3 style="margin:4px 0">📗 Cambridge ${bn.b.n} · Test ${bn.t} · Part ${bn.p}</h3><p class="small muted" style="margin:0 0 10px">Đề, audio và đáp án của sách đã có sẵn trong app. Nghe 1 lần như thi thật – cô chấm theo đáp án của sách.</p><button class="btn teal" id="goBook" style="width:100%;justify-content:center">▶ Làm Part ${bn.p}</button></div>`:"";
+    const unteal=h=>h.replace('style="border:2px solid var(--teal)"',"").replace(/class="btn teal" id="(goExam|goOff)"/g,'class="btn ghost" id="$1"');
     main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">Bước 4 · Đề thi</h2><button class="btn ghost small" id="bk">← Trang học</button></div>
-    ${exam}${web}
-    ${doneList.length?`<div class="panel"><h3 style="margin-top:0">↺ Làm lại đề chính thức đã làm</h3>${doneList.map((s,i)=>`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span class="small">${esc(s.details.title)}<br><span class="muted">${fmtDate(s.date)} · ${s.details.correct}/${s.details.total} câu đúng</span></span><button class="btn ghost small" data-redo="${esc(s.details.webId)}">Làm lại</button></div>`).join("")}</div>`:""}
-    <p class="small muted">Nhà có sách Cambridge? <button class="btn ghost small" id="useBook">Làm đề trong sách</button></p>`;
+    ${bn?book+unteal(oi?off:"")+unteal(exam):oi?off+exam.replace('style="border:2px solid var(--teal)"',"").replace('class="btn teal" id="goExam"','class="btn ghost" id="goExam"'):exam+off}`;
     say("Your exam is ready. Tap the green button.",`Hôm nay con làm đề thi Nghe Part ${part} ngay trong app. Bấm nút xanh nhé.`);
     $("#bk").onclick=()=>{tab="home";render()};
     $("#goExam").onclick=()=>startExam();
-    if($("#recHelp"))$("#recHelp").onclick=()=>iphoneRecHelp();
-    if($("#recWeb"))$("#recWeb").onclick=async()=>{const ok=await scrStart();if(!ok){toast("Chưa bật được ghi màn hình. Con bấm lại và chọn cửa sổ trang đề (hoặc toàn màn hình) nhé.");return}answerSheet({online:true,url:w.url,part:w.part,auto:true,webId:w.id,label:w.label,short:w.short,rec:true})};
-    $("#useBook").onclick=()=>{S.camBook=true;save();startCambridge("book")};
-    $("#camLost").onclick=()=>camFallback(w);
-    $("#goWeb").onclick=()=>{setTimeout(()=>answerSheet({online:true,url:w.url,part:w.part,auto:true,webId:w.id,label:w.label,short:w.short,paper:desk}),300)};
-    main.querySelectorAll("[data-redo]").forEach(b=>b.onclick=()=>{const it=webItems().find(x=>x.id===b.dataset.redo);if(!it)return;window.open(it.url,"_blank","noopener");setTimeout(()=>answerSheet({online:true,url:it.url,part:it.part,auto:true,webId:it.id,label:it.label,short:it.short,redo:true}),300)});
+    if($("#goOff"))$("#goOff").onclick=()=>officialRoom(oi);
+    if($("#goBook"))$("#goBook").onclick=()=>bookRoom(bn);
+
     return;
   }
   if(!src&&S.camBook)src="book";
@@ -1646,10 +1950,10 @@ function makeApiSample(){
   const call=async(input,opts={})=>{
     const messages=typeof input==="string"?[{role:"user",content:input}]:input;
     let r;
-    try{r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":S.settings.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:S.settings.apiModel||"claude-sonnet-5-5",max_tokens:4000,messages})})}
+    try{r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":S.settings.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(Object.assign({model:S.settings.apiModel||"claude-sonnet-5-5",max_tokens:opts.maxTokens||4000,messages},opts.tools?{tools:opts.tools}:{}))})}
     catch(e){throw {code:"offline",message:String(e)}}
     if(!r.ok){const t=await r.text();throw {code:r.status===401||r.status===403?"bad_key":r.status===429?"rate_limited":"error",message:t}}
-    const d=await r.json();const text=(d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+    const d=await r.json();if(d.stop_reason==="pause_turn"&&(opts._n||0)<3)return call(messages.concat([{role:"assistant",content:d.content}]),Object.assign({},opts,{_n:(opts._n||0)+1}));const text=(d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
     if(opts.onText)opts.onText({text,delta:text});
     return {text,truncated:d.stop_reason==="max_tokens"};
   };
@@ -2124,6 +2428,7 @@ async function renderParent(){
   ${!S.settings.pinChanged?`<div class="banner">Hãy đổi PIN mặc định ở phần Cài đặt bên dưới.</div>`:""}
   ${!S.settings.email?`<div class="banner">Chưa có email phụ huynh. Nhập ở Cài đặt để gửi báo cáo.</div>`:""}
   ${verifyPanel()}
+  ${bookPanel()}
   <div class="panel"><h3>Hôm nay</h3><p><b>${Math.floor(dayMinutes(k))}/${S.settings.dailyMin} phút</b> · ${today.length} buổi · ${dayMinutes(k)>=S.settings.dailyMin?"✅ Đã hoàn thành":S.dayOffs.includes(k)?"🌴 Ngày nghỉ đã đổi":"⏳ Chưa đủ"}</p>
   ${today.length?`<div class="scroll"><table class="t"><tr><th>Bắt đầu</th><th>Bài</th><th>Thời gian</th><th>Kết quả</th><th>Vội</th></tr>${today.map(s=>`<tr><td>${new Date(s.start).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"})}</td><td>${SKILL_NAME[s.type]}${s.status==="bỏ dở"?" (bỏ dở)":""}</td><td>${fmtTime(s.secs)}</td><td>${scoreText(s)}</td><td>${s.rushed||0}</td></tr>`).join("")}</table></div>`:""}
   <div class="row" style="margin-top:10px">${S.settings.email?`<a class="btn small teal" href="${mailtoDaily()}" target="_blank" rel="noopener">Gửi email hôm nay</a>`:""}<button class="btn small ghost" id="copyDay">Sao chép báo cáo</button></div></div>
@@ -2164,7 +2469,7 @@ async function renderParent(){
   <p>Một trang web không có quyền khoá ứng dụng khác trên điện thoại, nên phần này cần dùng công cụ kiểm soát của hệ điều hành:</p>
   <p><b>Android:</b> cài <b>Google Family Link</b> trên máy bố mẹ và máy con. Đặt “Giới hạn ứng dụng” cho mạng xã hội, game, và đặt “Luôn cho phép” Chrome hoặc ứng dụng Claude. Khi thấy báo cáo đủ ${S.settings.dailyMin} phút, bố mẹ mở khoá từ xa trong Family Link.</p>
   <p><b>iPhone:</b> Cài đặt → Thời gian sử dụng → Chia sẻ trong gia đình. Bật “Giờ nghỉ” (Downtime) cả ngày, thêm Safari/Claude vào “Luôn cho phép”, và bật “Yêu cầu thêm thời gian” để con xin mở khoá sau khi học xong.</p></div>`;
-  $("#lock").onclick=()=>{parentUnlocked=false;renderParent()};bindVerify();
+  $("#lock").onclick=()=>{parentUnlocked=false;renderParent()};bindVerify();if($("#bkImp"))$("#bkImp").onclick=()=>renderBookImport();
   $("#hookTest").onclick=async()=>{const u=$("#sHook").value.trim();if(!/^https:\/\/script\.google\.com\//.test(u)){toast("Địa chỉ Web App chưa đúng.");return}try{await fetch(u,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({ping:true,token:$("#sTok").value.trim()})});toast("Đã gửi. Kiểm tra hộp thư trong 1 phút.")}catch(e){toast("Không gửi được, kiểm tra mạng.")}};
   $("#backup").onclick=()=>{const b=new Blob([JSON.stringify(S)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`ielts-cho-zen-${dayKey()}.json`;document.body.appendChild(a);a.click();a.remove()};
   $("#restoreF").onchange=async ev=>{const f=ev.target.files[0];if(!f)return;const r=await modal(`<h3>Khôi phục dữ liệu?</h3><p>Dữ liệu hiện tại trên máy này sẽ được thay bằng file sao lưu.</p>`,[{label:"Khôi phục",cls:"danger"},{label:"Huỷ",cls:"ghost"}]);if(r.i!==0)return;try{S=mergeDefaults(JSON.parse(await f.text()));save();toast("Đã khôi phục dữ liệu.");renderParent()}catch(e){toast("File sao lưu không hợp lệ.")}};
@@ -2174,7 +2479,7 @@ async function renderParent(){
   $("#analyze").onclick=()=>analyzeWeek(ws,prev);
   main.querySelectorAll("[data-ap]").forEach(b=>b.onclick=()=>{const r=S.redemptions.find(x=>x.id===b.dataset.ap);if(!r)return;if(r.cost>stickerBalance()){toast("Không đủ sticker.");return}r.status="approved";S.stickers.spent+=r.cost;if(r.dayoff&&!S.dayOffs.includes(r.dayoff)){S.dayOffs.push(r.dayoff);queueLog({app:"ielts-comai",v:1,id:"off-"+r.id,date:r.dayoff,type:"dayoff",secs:0,dayOff:r.dayoff})}save();renderParent()});
   main.querySelectorAll("[data-rj]").forEach(b=>b.onclick=()=>{const r=S.redemptions.find(x=>x.id===b.dataset.rj);if(r){r.status="rejected";save();renderParent()}});
-  $("#saveSet").onclick=()=>{
+  $("#saveSet").onclick=()=>{S.settingsAt=Date.now();
     const st=S.settings;st.email=$("#sEmail").value.trim();st.childName=$("#sName").value.trim()||"Ngân Hà";
     st.dailyMin=Math.max(10,parseInt($("#sMin").value)||30);st.stickerValue=Math.max(0,parseInt($("#sVal").value)||0);st.dayOffCost=Math.max(1,parseInt($("#sOff").value)||5);st.stickerCap=Math.max(1,parseInt($("#sCap").value)||3);
     st.centerScore=roundBand(parseFloat($("#sCenter").value)||5);{const cb=parseFloat($("#sCur").value);st.currentBand=cb?roundBand(cb):null}st.targetDate=$("#sTarget").value||st.targetDate;st.grade=$("#sGrade").value.trim()||st.grade;st.apiKey=$("#sKey").value.trim();st.apiModel=$("#sModel").value.trim()||"claude-sonnet-5-5";st.webhookUrl=$("#sHook").value.trim();st.webhookToken=$("#sTok").value.trim();st.openEmail=$("#sOpenMail").checked;setTimeout(flushOutbox,500);
