@@ -1688,13 +1688,27 @@ async function bPut(k,v){const db=await bdb();await new Promise((res,rej)=>{cons
 async function bGet(k){try{const db=await bdb();return await new Promise(res=>{const r=db.transaction("f").objectStore("f").get(k);r.onsuccess=()=>res(r.result||null);r.onerror=()=>res(null)})}catch(e){return null}}
 async function bDel(prefix){try{const db=await bdb();await new Promise(res=>{const st=db.transaction("f","readwrite").objectStore("f");const c=st.openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return res();if(String(x.key).startsWith(prefix))x.delete();x.continue()};c.onerror=()=>res()})}catch(e){}}
 function parseKeyLines(lines){
-  const out=[],seen={},put=(q,a,g)=>{q=+q;a=String(a||"").trim().replace(/\s+/g," ");if(!(q>=1&&q<=40)||!a||seen[q]||/^(questions?|part)\b/i.test(a))return;seen[q]=1;out.push(g?{q,a,g}:{q,a})};
+  const out=[],seen={},put=(q,a,g)=>{q=+q;a=String(a||"").trim().replace(/\s+/g," ");if(!(q>=1&&q<=40)||!a||seen[q]||/^(questions?|part)\b/i.test(a))return;seen[q]=1;let st=false;if(/\*\s*$/.test(a)){a=a.replace(/\s*\*+\s*$/,"");st=true}const o=g?{q,a,g}:{q,a};if(st)o._st=1;out.push(o)};
+  const isNum=x=>/^\d{1,2}[.)]?$/.test(String(x||"").trim()),num=x=>parseInt(String(x).trim()),startsNum=x=>/^\d{1,2}\b/.test(String(x||"").trim());
+  const isHead=x=>/^(test|part|section|listening|reading|writing|questions?)\b/i.test(String(x||"").trim());
   for(let i=0;i<lines.length;i++){const L=lines[i].trim();if(!L)continue;
+    /* cột số đứng riêng (1,2,3…) rồi mới tới cột đáp án */
+    if(isNum(L)&&isNum(lines[i+1])&&num(lines[i+1])===num(L)+1){let j=i;while(j+1<lines.length&&isNum(lines[j+1])&&num(lines[j+1])===num(lines[j])+1)j++;
+      const r=j-i+1,ans=[];let k=j+1;while(ans.length<r&&k<lines.length&&!isNum(lines[k])&&!isHead(lines[k])){ans.push(lines[k].trim());k++}
+      if(r>=3&&ans.length===r){ans.forEach((a,t)=>put(num(L)+t,a));i=k-1;continue}}
+    /* tiêu đề "Questions 1–10" rồi các dòng đáp án KHÔNG có số (số in bằng hình) */
+    let h=L.match(/questions?\s*(\d{1,2})\s*[-–—]\s*(\d{1,2})\s*$/i);
+    if(h&&lines[i+1]&&!startsNum(lines[i+1])){const a=+h[1],b=+h[2];let k=i+1,q=a;while(q<=b&&k<lines.length&&!startsNum(lines[k])&&!isHead(lines[k])){put(q,lines[k]);q++;k++}if(q>a+2){i=k-1;continue}}
+    let e2=L.match(/^(\d{1,2})\s*(?:[-–&,]|and)\s*(\d{1,2})\s*(?:\(?in\s+(?:either|any)\s+order\)?)?\s*$/i);
+    if(e2&&/^[A-I]$/.test((lines[i+1]||"").trim())&&/^[A-I]$/.test((lines[i+2]||"").trim())){const g=e2[1]+"-"+e2[2];put(e2[1],lines[i+1].trim(),g);put(e2[2],lines[i+2].trim(),g);i+=2;continue}
     let m=L.match(/^(\d{1,2})\s*(?:[-–&,]|and)\s*(\d{1,2})\s*[.):]?\s+(.+)$/i);
     if(m){const lt=(m[3].match(/\b[A-I]\b/g)||[]);if(lt.length>=2){put(m[1],lt[0],m[1]+"-"+m[2]);put(m[2],lt[1],m[1]+"-"+m[2]);continue}}
     m=L.match(/^(\d{1,2})\s*[.):]?\s+(.+)$/);if(m){put(m[1],m[2]);continue}
     if(/^\d{1,2}$/.test(L)&&lines[i+1]&&!/^\d{1,2}$/.test(lines[i+1].trim())){put(L,lines[i+1]);i++}}
-  return out.sort((a,b)=>a.q-b.q)}
+  out.sort((a,b)=>a.q-b.q);
+  /* đáp án có dấu * = hai câu ghép cặp, chấp nhận thứ tự bất kỳ */
+  for(let i=0;i<out.length;i++){if(out[i]._st&&!out[i].g&&out[i+1]&&out[i+1]._st&&!out[i+1].g&&out[i+1].q===out[i].q+1){const g=out[i].q+"-"+out[i+1].q;out[i].g=g;out[i+1].g=g;i++}}
+  out.forEach(o=>delete o._st);return out}
 async function pdfReadText(file,onProg){
   const lib=await loadPdfJs();let doc;
   try{const rt=new lib.PDFDataRangeTransport(file.size,new Uint8Array(await file.slice(0,Math.min(file.size,262144)).arrayBuffer()));
@@ -1719,7 +1733,7 @@ function analyseBook(pages){
     T[n]={pages:st>=0?[st+1,en+1]:[0,0],key:[]}}
   if(keyStart>=0){const all=[];for(let p=keyStart;p<Math.min(pages.length,keyStart+12);p++)all.push(...pages[p]);
     let cur=0,inL=false;const seg={1:[],2:[],3:[],4:[]};
-    all.forEach(l=>{let m=l.length<70&&l.match(/(?:^|\b)test\s*([1-4])\b/i);if(m){cur=+m[1];inL=/listening/i.test(l);return}if(/^listening\b/i.test(l)){inL=true;return}if(/^reading\b/i.test(l)||/^writing\b/i.test(l)){inL=false;return}if(cur&&inL)seg[cur].push(l)});
+    all.forEach(l=>{let m=l.length<70&&l.match(/(?:^|\b)test\s*([1-4])\b/i);if(m){cur=+m[1];inL=/listening/i.test(l);return}if(/^listening\b/i.test(l)){inL=true;return}if((/^reading\b/i.test(l)||/^writing\b/i.test(l))&&(!cur||seg[cur].length)){inL=false;return}if(cur&&inL)seg[cur].push(l)});
     for(let n=1;n<=4;n++)T[n].key=parseKeyLines(seg[n])}
   return T}
 /* đọc chữ trong file Word (.docx) hoặc .txt – dùng cho file đáp án */
@@ -1777,7 +1791,7 @@ function bookReview(n,pdf,files,T,map){
   main.innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">📗 Cambridge ${n}: kiểm tra</h2><button class="btn ghost small" id="bk">← Quay lại</button></div>
   <p class="small muted">App đã đọc ${T._n} trang. Bố mẹ xem nhanh các ô dưới; chỗ nào app đoán sai thì sửa rồi bấm Lưu.</p>
   ${[1,2,3,4].map(t=>`<div class="panel"><h3 style="margin-top:0">Test ${t}</h3>
-    <label class="small">Trang đề Listening (số trang trong file PDF): từ <input type="number" id="pf${t}" value="${T[t].pages[0]||""}" style="max-width:80px"> đến <input type="number" id="pt${t}" value="${T[t].pages[1]||""}" style="max-width:80px"></label>
+    ${T[t].pages[0]?"":`<p class="small" style="color:var(--rose);margin:0 0 4px">App chưa tự tìm được trang đề (file PDF có thể là bản scan ảnh). Mở file PDF, xem <b>số trang</b> phần Listening của Test ${t} (thường 4–5 trang, bắt đầu từ trang có "Test ${t} – Listening – Part 1") rồi gõ vào 2 ô dưới.</p>`}<label class="small">Trang đề Listening (số trang trong file PDF): từ <input type="number" id="pf${t}" value="${T[t].pages[0]||""}" style="max-width:80px"> đến <input type="number" id="pt${t}" value="${T[t].pages[1]||""}" style="max-width:80px"></label>
     <p class="small" style="margin:8px 0 4px">Đáp án Listening: <b style="color:${T[t].key.length>=38?"var(--good)":"var(--rose)"}">${T[t].key.length}/40 câu</b> đọc được. Mỗi dòng: <code>số câu  đáp án</code>.</p>
     <textarea id="k${t}" style="min-height:110px;font-family:monospace">${esc(T[t].key.map(k=>k.q+" "+k.a+(k.g?" #"+k.g:"")).join("\n"))}</textarea>
     ${[1,2,3,4].map(p=>`<label class="small" style="display:block;margin-top:4px">Audio Part ${p}: <select id="a${t}-${p}">${opt(map[t+"-"+p])}</select></label>`).join("")}</div>`).join("")}
