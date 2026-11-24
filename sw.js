@@ -1,4 +1,4 @@
-const CACHE = "ielts-cho-zen-v3.7.2";
+const CACHE = "ielts-cho-zen-v3.7.4";
 const SHELL = ["./", "./index.html", "./three.min.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
