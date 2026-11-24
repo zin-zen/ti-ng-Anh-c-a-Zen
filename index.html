@@ -1547,29 +1547,36 @@ function camFallback(w){
 /* v3.2: đề chính thức mở trong app, AI lấy đáp án chính thức để chấm */
 const BCI="https://ielts.inspera.com/player/?assessmentRunId=",BCK="https://takeielts.britishcouncil.org/sites/default/files/%5Bdownloads%5D/ielts-listening-computer-delivered-";
 const OFFICIAL_AUTO=[
- {id:"oa-note",label:"British Council · Note Completion · Part 1",url:BCI+"189696078&context=exam#/section/184163671/question/184163670/scorableItem/1",key:BCK+"note-completion-answer-key.pdf"},
- {id:"oa-mc2",label:"British Council · Multiple choice (chọn nhiều đáp án) · Part 1",url:BCI+"189696950&context=exam#/section/171824485/question/145454275/scorableItem/1",key:BCK+"multiple-choice-more-than-one-answer-answer-key.pdf"},
- {id:"oa-map",label:"British Council · Plan/Map/Diagram Labelling · Part 2",url:BCI+"189695339&context=exam#/section/174541820/question/174541819/scorableItem/1",key:BCK+"plan-map-diagram-labelling-answer-key.pdf"},
- {id:"oa-short",label:"British Council · Short Answer Questions · Part 2",url:BCI+"189694459&context=exam#/section/174309255/question/174309254/scorableItem/1",key:BCK+"short-answer-answer-key.pdf"},
- {id:"oa-mc1",label:"British Council · Multiple choice (một đáp án) · Part 3",url:BCI+"189697549&context=exam#/section/171826252/question/145591537/scorableItem/1",key:BCK+"multiple-choice-one-answer-answer-key.pdf"},
- {id:"oa-sent",label:"British Council · Sentence Completion · Part 3",url:BCI+"189694885&context=exam#/section/184163445/question/171795621/scorableItem/1",key:BCK+"sentence-completion-answer-key.pdf"},
- {id:"oa-table",label:"British Council · Table Completion · Part 4",url:BCI+"189652254&context=exam#/section/181038775/question/181038772/scorableItem/1",key:BCK+"table-completion-answer-key.pdf"},
- {id:"oa-flow",label:"IELTS.org · Flow-chart Completion",url:BCI+"189697842&context=exam#/section/181951855/question/181951854/scorableItem/1",key:"https://ielts.org/cdn/computer-delivered-sample-tests-listening/ielts-listening-computer-delivered-flow-chart-completion-answer-key.pdf"}];
+ {id:"oa-note",label:"British Council · Note Completion · Part 1",url:BCI+"189696078&context=exam#/section/184163671/question/184163670/scorableItem/1",key:BCK+"note-completion-answer-key.pdf",answers:[{"q": 1, "a": "round"}, {"q": 2, "a": "12 years"}, {"q": 3, "a": "4"}, {"q": 4, "a": "green"}, {"q": 5, "a": "reasonable"}, {"q": 6, "a": "1.20 metres"}, {"q": 7, "a": "lock"}]},
+ {textMC:true,id:"oa-mc2",label:"British Council · Multiple choice (chọn nhiều đáp án) · Part 1",url:BCI+"189696950&context=exam#/section/171824485/question/145454275/scorableItem/1",key:BCK+"multiple-choice-more-than-one-answer-answer-key.pdf",answers:[{"q": 1, "a": "book reservations", "g": "1-3"}, {"q": 2, "a": "location of rooms", "g": "1-3"}, {"q": 3, "a": "café", "g": "1-3"}]},
+ {id:"oa-map",label:"British Council · Plan/Map/Diagram Labelling · Part 2",url:BCI+"189695339&context=exam#/section/174541820/question/174541819/scorableItem/1",key:BCK+"plan-map-diagram-labelling-answer-key.pdf",answers:[{"q": 1, "a": "H"}, {"q": 2, "a": "A"}, {"q": 3, "a": "C"}]},
+ {id:"oa-short",label:"British Council · Short Answer Questions · Part 2",url:BCI+"189694459&context=exam#/section/174309255/question/174309254/scorableItem/1",key:BCK+"short-answer-answer-key.pdf",answers:[{"q": 1, "a": "scientist(s)", "g": "1-3"}, {"q": 2, "a": "engineer(s)", "g": "1-3"}, {"q": 3, "a": "accountant(s)", "g": "1-3"}]},
+ {textMC:true,id:"oa-mc1",label:"British Council · Multiple choice (một đáp án) · Part 3",url:BCI+"189697549&context=exam#/section/171826252/question/145591537/scorableItem/1",key:BCK+"multiple-choice-one-answer-answer-key.pdf",answers:[{"q": 1, "a": "She wanted to understand her own background."}, {"q": 2, "a": "interviews"}, {"q": 3, "a": "organising what she had collected"}]},
+ {id:"oa-sent",label:"British Council · Sentence Completion · Part 3",url:BCI+"189694885&context=exam#/section/184163445/question/171795621/scorableItem/1",key:BCK+"sentence-completion-answer-key.pdf",answers:[{"q": 1, "a": "motivation"}, {"q": 2, "a": "time(-)management / time management"}, {"q": 3, "a": "modules"}, {"q": 4, "a": "summer school(s)"}]},
+ {id:"oa-table",label:"British Council · Table Completion · Part 4",url:BCI+"189652254&context=exam#/section/181038775/question/181038772/scorableItem/1",key:BCK+"table-completion-answer-key.pdf",answers:[{"q": 1, "a": "challenge"}, {"q": 2, "a": "school"}, {"q": 3, "a": "health"}, {"q": 4, "a": "interests"}, {"q": 5, "a": "tutor(s)"}]},
+ {id:"oa-flow",label:"IELTS.org · Flow-chart Completion",url:BCI+"189697842&context=exam#/section/181951855/question/181951854/scorableItem/1",key:"https://ielts.org/cdn/computer-delivered-sample-tests-listening/ielts-listening-computer-delivered-flow-chart-completion-answer-key.pdf",answers:[{"q": 1, "a": "site"}, {"q": 2, "a": "radiation"}, {"q": 3, "a": "heat"}, {"q": 4, "a": "microbes"}, {"q": 5, "a": "results"}]}];
 const OFF_HOSTS=/(^|\.)(britishcouncil\.org|idp\.com|ielts\.org|inspera\.com|cambridgeenglish\.org)$/i;
 function okHost(u){try{const h=new URL(u).hostname;return location.protocol!=="file:"&&u.startsWith("https://")&&OFF_HOSTS.test(h)}catch(e){return false}}
 /* v3.4: kho đề chính thức do Apps Script của bố mẹ tải về mỗi tuần – app tự chấm, không cần AI */
 async function loadKho(force){if(!S||!S.settings)return;const u=S.settings.webhookUrl,t=S.settings.webhookToken;if(!u||!t||!/^https:/.test(u))return;if(!force&&S.khoAt===dayKey())return;
   try{const r=await fetch(u+(u.includes("?")?"&":"?")+"action=tests&token="+encodeURIComponent(t));if(!r.ok)return;const j=await r.json();
-    if(Array.isArray(j.items)){S.khoTests=j.items.filter(x=>x&&okHost(x.url||"")&&okHost(x.key||"")&&Array.isArray(x.answers)&&x.answers.length>=3).map(x=>({id:String(x.id),label:String(x.label||"Đề chính thức").slice(0,100),url:String(x.url),key:String(x.key),answers:x.answers.slice(0,40).map(a=>Object.assign({q:+a.q,a:String(a.a).slice(0,80)},a.g?{g:String(a.g)}:{}))}));S.khoAt=dayKey();S.khoUpdated=j.updated||"";save()}}catch(e){}}
+    if(Array.isArray(j.items)){const old=S.khoTests||[];S.khoTests=j.items.filter(x=>x&&okHost(x.url||"")&&okHost(x.key||"")).map(x=>{const prev=old.find(o=>o.id===String(x.id)),ans=Array.isArray(x.answers)&&x.answers.length>=3?x.answers:(prev&&prev.answers)||[];return {id:String(x.id),label:String(x.label||"Đề chính thức").slice(0,100),url:String(x.url),key:String(x.key),tries:(prev&&prev.tries)||0,answers:ans.slice(0,40).map(a=>Object.assign({q:+a.q,a:String(a.a).slice(0,80)},a.g?{g:String(a.g)}:{}))}});S.khoAt=dayKey();S.khoUpdated=j.updated||"";save()}
+    await fillKhoAnswers()}catch(e){}}
+/* App tự đọc file đáp án PDF (Apps Script chỉ tải hộ vì trình duyệt không được tải thẳng từ trang khác) */
+async function fillKhoAnswers(){const need=(S.khoTests||[]).filter(x=>(!x.answers||x.answers.length<3)&&(x.tries||0)<3).slice(0,8);if(!need.length)return;
+  for(const it of need){it.tries=(it.tries||0)+1;try{const j=await gsGet({action:"pdf",id:it.id});if(!j||!j.b64)continue;
+    const bin=atob(j.b64),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+    const pages=await pdfReadText(new File([u8],"dap-an.pdf",{type:"application/pdf"}));const ans=parseKeyLines(pages.flat());if(ans.length>=3)it.answers=ans}catch(e){}}
+  save();if(!session&&!busyTyping()&&tab==="home")render()}
 setTimeout(()=>{try{loadKho()}catch(e){}},4000);
 function wNum_(s){const W={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};return s.replace(/\b[a-z]+\b/g,w=>W[w]!=null?String(W[w]):w)}
-function nz_(s){return wNum_(String(s||"").toLowerCase().replace(/[’`]/g,"'").replace(/[^a-z0-9'%:.\- ]/g," ").replace(/\s+/g," ").trim().replace(/\.$/,""))}
+function nz_(s){return wNum_(String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[’`]/g,"'").replace(/[^a-z0-9'%:.\- ]/g," ").replace(/\s+/g," ").trim().replace(/\.$/,""))}
 function keyAlts_(k){const out=[];String(k).split(/\s*\/\s*|\s+or\s+|\s*;\s*/i).forEach(p=>{[p.replace(/[()\[\]]/g,""),p.replace(/\([^)]*\)|\[[^\]]*\]/g,"")].forEach(x=>{x=nz_(x);if(x&&!out.includes(x))out.push(x)})});return out}
 function okAns_(st,k){const s=nz_(st);if(!s)return false;return keyAlts_(k).some(a=>a===s||a.replace(/ /g,"")===s.replace(/ /g,""))}
-function localGrade(it,A){const K=it.answers.slice().sort((a,b)=>a.q-b.q);const items=K.map((k,i)=>({q:k.q,student:A[i]||"",key:k.a,correct:false,g:k.g}));
+function localGrade(it,A){const okA=(st,k)=>okAns_(st,k)||(it.textMC&&nz_(st).length>=4&&nz_(k).startsWith(nz_(st)));const K=it.answers.slice().sort((a,b)=>a.q-b.q);const items=K.map((k,i)=>({q:k.q,student:A[i]||"",key:k.a,correct:false,g:k.g}));
   const groups={};items.forEach((x,i)=>{if(x.g)(groups[x.g]=groups[x.g]||[]).push(i)});
-  items.forEach(x=>{if(!x.g)x.correct=okAns_(x.student,x.key)});
-  Object.values(groups).forEach(ix=>{const keys=ix.map(i=>nz_(items[i].key)),used=[];ix.forEach(i=>{const s=nz_(items[i].student);const j=keys.findIndex((k,jj)=>k===s&&!used.includes(jj));if(j>=0){used.push(j);items[i].correct=true}})});
+  items.forEach(x=>{if(!x.g)x.correct=okA(x.student,x.key)});
+  Object.values(groups).forEach(ix=>{const keys=ix.map(i=>items[i].key),used=[];ix.forEach(i=>{const s=items[i].student;const j=keys.findIndex((k,jj)=>okA(s,k)&&!used.includes(jj));if(j>=0){used.push(j);items[i].correct=true}})});
   return {items:items.map(x=>({q:x.q,student:x.student,key:x.key,correct:x.correct})),note:"",local:true}}
 function gradable(it){return !!(it&&((it.answers&&it.answers.length>=3)||aiOK()))}
 /* tự tìm đề chính thức mới mỗi tuần (cần khoá AI) */
@@ -1587,7 +1594,7 @@ Only include links you actually saw in search results or fetched pages, on those
 }
 function aiOK(){return !!((S.settings&&S.settings.apiKey)||(window.claude&&window.claude.use))}
 function officialItems(){const L=OFFICIAL_AUTO.map(x=>Object.assign({},x)),base=u=>String(u||"").split("#")[0];
-  (S.khoTests||[]).forEach(k=>{const m=L.find(o=>o.key===k.key||base(o.url)===base(k.url));if(m){if(!m.answers)m.answers=k.answers}else L.push(Object.assign({},k))});
+  (S.khoTests||[]).forEach(k=>{const m=L.find(o=>o.key===k.key||base(o.url)===base(k.url));if(m){if(!(m.answers&&m.answers.length))m.answers=k.answers}else L.push(Object.assign({},k))});
   (S.extraTests||[]).concat(S.autoTests||[]).forEach(x=>{if(x&&x.key&&x.url&&!L.some(o=>o.id===x.id||o.key===x.key||base(o.url)===base(x.url)))L.push(x)});return L.filter(gradable)}
 function officialNext(){const d=S.offDone||[],L=officialItems();const fresh=L.find(x=>!d.includes(x.id));if(fresh)return fresh;
   const last={};S.sessions.forEach(s=>{if(s.details&&s.details.offId)last[s.details.offId]=s.date});
@@ -1604,7 +1611,7 @@ function officialRoom(it){
   main.innerHTML=`${sessionHead("Đề chính thức")}<div style="display:${desk?"grid":"block"};grid-template-columns:62% 1fr;gap:12px;align-items:start">
    <div><div class="row" style="justify-content:space-between;margin-bottom:6px;gap:6px"><span class="small"><b>${esc(it.label)}</b></span><button class="btn ghost small" id="ofPop">Trang đề không hiện? Mở riêng</button></div>
    <iframe id="ofFrame" title="Trang đề chính thức" src="${esc(it.url)}" allow="autoplay" style="width:100%;height:${desk?"74vh":"52vh"};border:1px solid var(--line);border-radius:10px;background:#fff"></iframe></div>
-   <div class="panel" style="margin:${desk?"0":"12px 0 0"}"><p class="small" style="margin:0 0 8px">Nghe <b>1 lần</b> trên trang đề, gõ đáp án vào đây <b>theo thứ tự câu hỏi</b> (câu nào không có thì để trống). Trắc nghiệm: gõ chữ cái A, B, C…</p>
+   <div class="panel" style="margin:${desk?"0":"12px 0 0"}"><p class="small" style="margin:0 0 8px">Nghe <b>1 lần</b> trên trang đề, gõ đáp án vào đây <b>theo thứ tự câu hỏi</b> (câu nào không có thì để trống). ${it.textMC?"Trắc nghiệm: gõ <b>nội dung</b> phương án con chọn (chỉ cần vài chữ đầu), không gõ chữ cái.":"Trắc nghiệm: gõ chữ cái A, B, C…"}</p>
    ${Array.from({length:N},(_,k)=>`<div class="q" style="display:flex;gap:8px;align-items:center;margin:4px 0"><span class="qn">${k+1}</span><input type="text" id="of${k}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`).join("")}
    <button class="btn teal" id="ofDone" style="width:100%;justify-content:center;margin-top:8px">Nộp bài – cô chấm theo đáp án chính thức</button></div></div>`;
   bindQuit();
@@ -1637,8 +1644,8 @@ const PDFJS_BASE="";
 let _pdfjs=null,_fflate=null;const FFLATE_SRC="fflate.min.js";
 function loadFflate(){if(_fflate)return _fflate;_fflate=new Promise((res,rej)=>{if(window.fflate)return res(window.fflate);const sc=document.createElement("script");sc.src=FFLATE_SRC;sc.onload=()=>window.fflate?res(window.fflate):rej("fflate");sc.onerror=()=>{_fflate=null;rej("fflate")};document.head.appendChild(sc)});return _fflate}
 async function unzipBook(file,onMsg){const ff=await loadFflate(),u8=new Uint8Array(await file.arrayBuffer());onMsg&&onMsg("Đang giải nén…");
-  const ents=await new Promise((res,rej)=>ff.unzip(u8,{filter:f=>!/(^|\/)(__MACOSX|\._)/.test(f.name)&&/\.(pdf|mp3|m4a|wav|aac|zip)$/i.test(f.name)},(e,d)=>e?rej(e):res(d)));
-  let out=[];for(const [name,data] of Object.entries(ents)){const base=name.split("/").pop();if(/\.zip$/i.test(base)){try{out=out.concat(await unzipBook(new File([data],base),onMsg))}catch(e){}}else out.push(new File([data],base,{type:/\.pdf$/i.test(base)?"application/pdf":"audio/mpeg"}))}
+  const ents=await new Promise((res,rej)=>ff.unzip(u8,{filter:f=>!/(^|\/)(__MACOSX|\._)/.test(f.name)&&/\.(pdf|mp3|m4a|wav|aac|zip|docx|txt)$/i.test(f.name)},(e,d)=>e?rej(e):res(d)));
+  let out=[];for(const [name,data] of Object.entries(ents)){const base=name.split("/").pop();if(/\.zip$/i.test(base)){try{out=out.concat(await unzipBook(new File([data],base),onMsg))}catch(e){}}else out.push(new File([data],base,{type:/\.pdf$/i.test(base)?"application/pdf":/\.docx$/i.test(base)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":/\.txt$/i.test(base)?"text/plain":"audio/mpeg"}))}
   return out}
 function loadPdfJs(){if(_pdfjs)return _pdfjs;_pdfjs=new Promise((res,rej)=>{if(window.pdfjsLib)return res(window.pdfjsLib);const sc=document.createElement("script");sc.src=PDFJS_BASE+"pdf.min.js";sc.onload=()=>{try{pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_BASE+"pdf.worker.min.js";res(pdfjsLib)}catch(e){rej(e)}};sc.onerror=()=>{_pdfjs=null;rej("pdfjs")};document.head.appendChild(sc)});return _pdfjs}
 function bdb(){return new Promise((res,rej)=>{if(!window.indexedDB)return rej("noidb");const r=indexedDB.open("ielts-books",1);r.onupgradeneeded=()=>r.result.createObjectStore("f");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
@@ -1671,9 +1678,14 @@ function analyseBook(pages){
     T[n]={pages:st>=0?[st+1,en+1]:[0,0],key:[]}}
   if(keyStart>=0){const all=[];for(let p=keyStart;p<Math.min(pages.length,keyStart+12);p++)all.push(...pages[p]);
     let cur=0,inL=false;const seg={1:[],2:[],3:[],4:[]};
-    all.forEach(l=>{let m=l.match(/^test\s*([1-4])\b/i);if(m){cur=+m[1];inL=/listening/i.test(l);return}if(/^listening\b/i.test(l)){inL=true;return}if(/^reading\b/i.test(l)||/^writing\b/i.test(l)){inL=false;return}if(cur&&inL)seg[cur].push(l)});
+    all.forEach(l=>{let m=l.length<70&&l.match(/(?:^|\b)test\s*([1-4])\b/i);if(m){cur=+m[1];inL=/listening/i.test(l);return}if(/^listening\b/i.test(l)){inL=true;return}if(/^reading\b/i.test(l)||/^writing\b/i.test(l)){inL=false;return}if(cur&&inL)seg[cur].push(l)});
     for(let n=1;n<=4;n++)T[n].key=parseKeyLines(seg[n])}
   return T}
+/* đọc chữ trong file Word (.docx) hoặc .txt – dùng cho file đáp án */
+async function docxLines(file){if(/\.txt$/i.test(file.name))return (await file.text()).split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  const ff=await loadFflate(),u8=new Uint8Array(await file.arrayBuffer()),z=await new Promise((res,rej)=>ff.unzip(u8,{filter:f=>f.name==="word/document.xml"},(e,d)=>e?rej(e):res(d)));
+  const xml=new TextDecoder().decode(z["word/document.xml"]||new Uint8Array());const out=[];
+  xml.split(/<\/w:p>/).forEach(p=>{const cells=p.split(/<\/w:tc>/);const t=p.replace(/<w:tab\/>/g," ").replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/\s+/g," ").trim();if(t)out.push(t)});return out}
 function audioSlot(name){const s=name.toLowerCase();let m=s.match(/test\s*_?0?([1-4])\D{0,12}?(?:part|section|sec|p)\s*_?0?([1-4])/);if(m)return m[1]+"-"+m[2];m=s.match(/\bt\s*0?([1-4])\s*[-_ ]?\s*p\s*0?([1-4])\b/);if(m)return m[1]+"-"+m[2];m=s.match(/(?:^|\D)([1-4])[-_. ]([1-4])(?:\D|$)/);if(m)return m[1]+"-"+m[2];return null}
 function bookList(){return S.books||[]}
 function bookNext(){const have=myBookFiles();for(const b of bookList()){if(!have.includes(b.n))continue;const pr=(S.bookProg||{})[b.n]||{t:1,p:1};if(pr.t<=4)return {b,t:pr.t,p:pr.p}}return null}
@@ -1692,11 +1704,14 @@ async function renderBookImport(){
   $("#bkZip").onchange=e=>guessN(e.target.files[0]);$("#bkDir").onchange=e=>{const f=e.target.files[0];if(f)guessN({name:(f.webkitRelativePath||f.name).split("/")[0]})};$("#bkPdf").onchange=e=>guessN(e.target.files[0]);
   $("#bkGo").onclick=async()=>{const n=parseInt($("#bkN").value),msg=$("#bkMsg");let all=[];
     try{if($("#bkZip").files[0])all=await unzipBook($("#bkZip").files[0],t=>msg.textContent=t);else if($("#bkDir").files.length)all=[...$("#bkDir").files].filter(f=>!/^\._/.test(f.name));else all=[...$("#bkPdf").files,...$("#bkMp3").files]}catch(e){msg.textContent="Không giải nén được file này ("+String(e).slice(0,50)+"). Nếu là file .rar, hãy giải nén ra thư mục rồi dùng Cách 2.";return}
-    const pdfs=all.filter(f=>/\.pdf$/i.test(f.name)).sort((a,b)=>b.size-a.size),mp3=all.filter(f=>/\.(mp3|m4a|wav|aac)$/i.test(f.name));
+    const pdfs=all.filter(f=>/\.pdf$/i.test(f.name)).sort((a,b)=>b.size-a.size),mp3=all.filter(f=>/\.(mp3|m4a|wav|aac)$/i.test(f.name)),docs=all.filter(f=>/\.(docx|txt)$/i.test(f.name));
+    if(all.some(f=>/\.doc$/i.test(f.name))&&!docs.length)msg.textContent="Có file Word đời cũ (.doc) – app chưa đọc được. Mở file đó bằng Word, chọn Lưu thành .docx rồi nhập lại.";
     if(!(n>=1)){toast("Nhập số của sách.");return}if(!pdfs.length){msg.textContent="Không thấy file PDF nào trong file đã chọn.";return}if(!mp3.length){msg.textContent="Không thấy file audio (MP3) nào trong file đã chọn.";return}
     const pdf=pdfs[0];let T;
     try{let pages=[];for(const [i,f] of pdfs.slice(0,3).entries()){const pg=await pdfReadText(f,(p,t)=>{msg.textContent=`Đang đọc PDF ${i+1}/${Math.min(3,pdfs.length)}: trang ${p}/${t}`});if(i===0)pages=pg;else pages=pages.concat(pg)}
-      T=analyseBook(pages);T._n=pages.length}catch(e){msg.textContent="Không đọc được PDF ("+String(e).slice(0,60)+"). Kiểm tra mạng rồi thử lại.";return}
+      const nPdf=pages.length;
+      for(const d of docs.slice(0,6)){try{msg.textContent="Đang đọc file đáp án "+d.name+"…";const ls=await docxLines(d);if(ls.length&&!ls.some(l=>/\btest\s*[1-4]\b/i.test(l))){const m=d.name.match(/test\s*_?([1-4])/i);if(m)ls.unshift("Test "+m[1]+" Listening")}if(ls.length)pages.push(["Listening and Reading answer keys"].concat(ls))}catch(e){}}
+      T=analyseBook(pages);T._n=nPdf}catch(e){msg.textContent="Không đọc được PDF ("+String(e).slice(0,60)+"). Kiểm tra mạng rồi thử lại.";return}
     const files=mp3.slice().sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})),map={};
     files.forEach(f=>{const k=audioSlot(f.name);if(k&&map[k]==null)map[k]=files.indexOf(f)});
     if(Object.keys(map).length<4){let i=0;for(let t=1;t<=4;t++)for(let p=1;p<=4;p++){const k=t+"-"+p;if(map[k]==null&&i<files.length)map[k]=i++}}
