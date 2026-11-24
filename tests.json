@@ -1,0 +1,13 @@
+{
+ "_huong_dan": "Thêm đề chính thức mới vào mảng tests. Mỗi đề: id (duy nhất), label (tên hiện cho con), url (link trang làm bài), key (link file ĐÁP ÁN chính thức, PDF hoặc trang web – có trường này thì cô tự chấm), part (1-4, hoặc 0 nếu là bài ngắn). Tải file này lên GitHub là app tự cập nhật, không cần cài lại.",
+ "tests": [
+  {
+   "id": "vidu-1",
+   "src": "British Council",
+   "url": "https://takeielts.britishcouncil.org/prepare/ielts-free-practice-mock-tests/ielts-familiarisation-test",
+   "label": "British Council – bài làm quen thi trên máy tính (phần Listening)",
+   "find": "phần Listening của bài làm quen",
+   "part": 0
+  }
+ ]
+}
